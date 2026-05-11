@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 
 export function MediaCard({ item }: { item: any }) {
   const [status, setStatus] = useState<string | null>(null)
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const title = item.title || item.name || 'Без названия'
@@ -17,11 +18,15 @@ export function MediaCard({ item }: { item: any }) {
     if (!data.user) return
     const {  response } = await supabase
       .from('user_media')
-      .select('status')
+      .select('status, updated_at')
       .eq('user_id', data.user.id)
       .eq('tmdb_id', item.id)
       .maybeSingle()
-    if (response) setStatus(response.status)
+    
+    if (response) {
+      setStatus(response.status)
+      setUpdatedAt(response.updated_at || null)
+    }
   }
 
   const addToLibrary = async (newStatus: string) => {
@@ -29,6 +34,7 @@ export function MediaCard({ item }: { item: any }) {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return alert('Войдите в аккаунт!')
     const user = data.user
+    const now = new Date().toISOString()
 
     await supabase.from('media_cache').upsert({
       tmdb_id: item.id, media_type: item.media_type, title, poster_path: item.poster_path,
@@ -36,10 +42,14 @@ export function MediaCard({ item }: { item: any }) {
     }, { onConflict: 'tmdb_id' })
 
     await supabase.from('user_media').upsert({
-      user_id: user.id, tmdb_id: item.id, status: newStatus, updated_at: new Date().toISOString()
+      user_id: user.id,
+      tmdb_id: item.id,
+      status: newStatus,
+      updated_at: now
     }, { onConflict: 'user_id,tmdb_id' })
 
     setStatus(newStatus)
+    setUpdatedAt(now)
     setLoading(false)
   }
 
@@ -49,6 +59,18 @@ export function MediaCard({ item }: { item: any }) {
     if (s === 'watching') return '#2563eb'
     if (s === 'dropped') return '#dc2626'
     return '#4b5563'
+  }
+
+  // Простое форматирование: ДД.ММ.ГГ ЧЧ:ММ
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const yy = String(d.getFullYear()).slice(-2)
+    const hh = String(d.getHours()).padStart(2, '0')
+    const min = String(d.getMinutes()).padStart(2, '0')
+    return `${dd}.${mm}.${yy} ${hh}:${min}`
   }
 
   return (
@@ -78,24 +100,33 @@ export function MediaCard({ item }: { item: any }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'white', lineHeight: '1.3' }}>{title}</h3>
           <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: '#9ca3af' }}>{year}</p>
         </div>
         
-        <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
-          style={{ 
-            padding: '6px 10px', borderRadius: '6px', border: 'none', 
-            fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', 
-            color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
-          }}>
-          <option value="" disabled> Статус</option>
-          <option value="planned">📋 В планах</option>
-          <option value="watching">👀 Смотрю</option>
-          <option value="watched">✅ Просмотрено</option>
-          <option value="dropped">❌ Бросил</option>
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
+            style={{ 
+              padding: '6px 10px', borderRadius: '6px', border: 'none', 
+              fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', 
+              color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
+            }}>
+            <option value="" disabled> Статус</option>
+            <option value="planned">📋 В планах</option>
+            <option value="watching">👀 Смотрю</option>
+            <option value="watched">✅ Просмотрено</option>
+            <option value="dropped">❌ Бросил</option>
+          </select>
+          
+          {/* Дата маленьким шрифтом */}
+          {updatedAt && (
+            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>
+              {formatDate(updatedAt)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
