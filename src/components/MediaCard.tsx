@@ -36,8 +36,13 @@ export function MediaCard({ item }: { item: any }) {
     setLoading(false)
   }
 
-  const getColor = (s: string) => s === 'watched' ? 'bg-green-600' : s === 'watching' ? 'bg-blue-600' : s === 'dropped' ? 'bg-red-600' : 'bg-gray-600'
-
+  const getColor = (s: string) => {
+  if (!s) return '#374151'        // gray-700
+  if (s === 'watched') return '#16a34a'   // green-600
+  if (s === 'watching') return '#2563eb'  // blue-600
+  if (s === 'dropped') return '#dc2626'   // red-600
+  return '#4b5563'                // gray-600
+}
   return (
     <div style={{ display: 'flex', gap: '12px', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: '1px solid #374151', marginBottom: '12px', width: '100%', position: 'relative' }}>
       {item.onDelete && (
