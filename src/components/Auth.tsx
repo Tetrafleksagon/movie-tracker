@@ -28,10 +28,27 @@ export function Auth() {
     }
   }
 
+  // 🔐 Обработчик сброса пароля
+  const handleForgotPassword = async () => {
+    const emailInput = prompt('Введите email для сброса пароля:')
+    if (!emailInput) return
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
+      redirectTo: `${window.location.origin}/`,
+    })
+    
+    if (error) {
+      alert('❌ Ошибка: ' + error.message)
+    } else {
+      alert('✅ Письмо со ссылкой для сброса пароля отправлено на:\n' + emailInput)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <form onSubmit={handleAuth} className="bg-gray-800 p-6 rounded-xl w-full max-w-md space-y-4">
         <h2 className="text-2xl font-bold text-white text-center">🎬 Movie Tracker</h2>
+        
         <input 
           type="email" 
           placeholder="Email" 
@@ -40,6 +57,7 @@ export function Auth() {
           required 
           className="w-full p-3 rounded bg-gray-700 text-white border border-gray-600" 
         />
+        
         <input 
           type="password" 
           placeholder="Пароль" 
@@ -48,6 +66,18 @@ export function Auth() {
           required 
           className="w-full p-3 rounded bg-gray-700 text-white border border-gray-600" 
         />
+        
+        {/* 🔐 Ссылка "Забыли пароль?" */}
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="text-sm text-blue-400 hover:text-blue-300 underline cursor-pointer bg-transparent border-none p-0 font-inherit"
+          >
+            Забыли пароль?
+          </button>
+        </div>
+
         <button 
           type="submit" 
           disabled={loading} 
@@ -55,12 +85,14 @@ export function Auth() {
         >
           {loading ? 'Загрузка...' : (isSignUp ? 'Регистрация' : 'Войти')}
         </button>
+        
         <p 
           className="text-center text-sm text-gray-400 cursor-pointer hover:text-white" 
           onClick={() => { setIsSignUp(!isSignUp); setMessage('') }}
         >
           {isSignUp ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Регистрация'}
         </p>
+        
         {message && <p className="text-center text-sm text-green-400">{message}</p>}
       </form>
     </div>
