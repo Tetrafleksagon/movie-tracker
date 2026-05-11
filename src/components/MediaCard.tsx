@@ -14,43 +14,85 @@ export function MediaCard({ item }: { item: any }) {
   useEffect(() => { checkInLibrary() }, [item.id])
 
   const checkInLibrary = async () => {
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) return
-    const {  response } = await supabase
-      .from('user_media')
-      .select('status, updated_at')
-      .eq('user_id', data.user.id)
-      .eq('tmdb_id', item.id)
-      .maybeSingle()
-    
-    if (response) {
-      setStatus(response.status)
-      setUpdatedAt(response.updated_at || null)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data, error } = await supabase
+        .from('user_media')
+        .select('status, updated_at')
+        .eq('user_id', user.id)
+        .eq('tmdb_id', item.id)
+        .maybeSingle()
+      
+      if (error) {
+        console.error('Ошибка при загрузке статуса:', error)
+        return
+      }
+      
+      if (data) {
+        setStatus(data.status)
+        setUpdatedAt(data.updated_at)
+      }
+    } catch (err) {
+      console.error('Ошибка checkInLibrary:', err)
     }
   }
 
   const addToLibrary = async (newStatus: string) => {
-    setLoading(true)
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) return alert('Войдите в аккаунт!')
-    const user = data.user
-    const now = new Date().toISOString()
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        alert('Войдите в аккаунт!')
+        setLoading(false)
+        return
+      }
+      
+      const now = new Date().toISOString()
 
-    await supabase.from('media_cache').upsert({
-      tmdb_id: item.id, media_type: item.media_type, title, poster_path: item.poster_path,
-      vote_average: item.vote_average || 0, release_date: item.release_date || item.first_air_date
-    }, { onConflict: 'tmdb_id' })
+      // Сохраняем данные фильма в кэш
+      const { error: cacheError } = await supabase
+        .from('media_cache')
+        .upsert({
+          tmdb_id: item.id,
+          media_type: item.media_type,
+          title,
+          poster_path: item.poster_path,
+          vote_average: item.vote_average || 0,
+          release_date: item.release_date || item.first_air_date
+        }, { onConflict: 'tmdb_id' })
 
-    await supabase.from('user_media').upsert({
-      user_id: user.id,
-      tmdb_id: item.id,
-      status: newStatus,
-      updated_at: now
-    }, { onConflict: 'user_id,tmdb_id' })
+      if (cacheError) {
+        console.error('Ошибка сохранения в кэш:', cacheError)
+      }
 
-    setStatus(newStatus)
-    setUpdatedAt(now)
-    setLoading(false)
+      // Сохраняем статус пользователя
+      const { error: statusError } = await supabase
+        .from('user_media')
+        .upsert({
+          user_id: user.id,
+          tmdb_id: item.id,
+          status: newStatus,
+          updated_at: now
+        }, { onConflict: 'user_id,tmdb_id' })
+
+      if (statusError) {
+        console.error('Ошибка сохранения статуса:', statusError)
+        alert('Не удалось сохранить статус. Попробуйте снова.')
+      } else {
+        // ✅ Только если успешно — обновляем состояние
+        setStatus(newStatus)
+        setUpdatedAt(now)
+        console.log('✅ Статус сохранён:', newStatus, 'в', now)
+      }
+      
+      setLoading(false)
+    } catch (err) {
+      console.error('Ошибка addToLibrary:', err)
+      alert('Произошла ошибка при сохранении')
+      setLoading(false)
+    }
   }
 
   const getColor = (s: string) => {
@@ -61,7 +103,7 @@ export function MediaCard({ item }: { item: any }) {
     return '#4b5563'
   }
 
-  // Простое форматирование: ДД.ММ.ГГ ЧЧ:ММ
+  // Форматирование: ДД.ММ.ГГ ЧЧ:ММ
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
@@ -106,12 +148,29 @@ export function MediaCard({ item }: { item: any }) {
           <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: '#9ca3af' }}>{year}</p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
+        {/* ✅ Адаптивный блок: на мобильных переносится на новую строку */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '10px', 
+          flexWrap: 'wrap',
+          justifyContent: 'flex-start'
+        }}>
+          <select 
+            value={status || ''} 
+            onChange={(e) => addToLibrary(e.target.value)} 
+            disabled={loading}
             style={{ 
-              padding: '6px 10px', borderRadius: '6px', border: 'none', 
-              fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', 
-              color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
+              padding: '6px 10px', 
+              borderRadius: '6px', 
+              border: 'none', 
+              fontSize: '14px', 
+              backgroundColor: status ? getColor(status) : '#374151', 
+              color: 'white', 
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: '500',
+              minWidth: '140px',
+              opacity: loading ? 0.7 : 1
             }}>
             <option value="" disabled> Статус</option>
             <option value="planned">📋 В планах</option>
@@ -120,13 +179,25 @@ export function MediaCard({ item }: { item: any }) {
             <option value="dropped">❌ Бросил</option>
           </select>
           
-          {/* Дата маленьким шрифтом */}
+          {/* ✅ Дата: на мобильных переносится, шрифт чуть крупнее */}
           {updatedAt && (
-            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>
+            <span style={{ 
+              fontSize: '11px', 
+              color: '#9ca3af', 
+              whiteSpace: 'nowrap',
+              marginLeft: 'auto'  // Прижимает дату вправо
+            }}>
               {formatDate(updatedAt)}
             </span>
           )}
         </div>
+        
+        {/* Индикатор загрузки */}
+        {loading && (
+          <span style={{ fontSize: '11px', color: '#6b7280' }}>
+            Сохранение...
+          </span>
+        )}
       </div>
     </div>
   )
