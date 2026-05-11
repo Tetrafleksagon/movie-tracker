@@ -45,7 +45,7 @@ export function MediaCard({ item }: { item: any }) {
       user_id: user.id,
       tmdb_id: item.id,
       status: newStatus,
-      status_updated_at: now, // Сохраняем время изменения статуса
+      status_updated_at: now,
       updated_at: now
     }, { onConflict: 'user_id,tmdb_id' })
 
@@ -62,7 +62,7 @@ export function MediaCard({ item }: { item: any }) {
     return '#4b5563'
   }
 
-  // Форматирование: чч:мм дд/мм.гг
+  // Форматирование: чч:мм дд/мм/гг (исправлено: слэш вместо точки)
   const formatShortDate = (dateStr: string | null) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
@@ -71,7 +71,7 @@ export function MediaCard({ item }: { item: any }) {
     const dd = String(d.getDate()).padStart(2, '0')
     const mo = String(d.getMonth() + 1).padStart(2, '0')
     const yy = String(d.getFullYear()).slice(-2)
-    return `${hh}:${mm} ${dd}/${mo}.${yy}`
+    return `${hh}:${mm} ${dd}/${mo}/${yy}`  // ✅ Исправлено: dd/mm/yy
   }
 
   return (
@@ -108,22 +108,20 @@ export function MediaCard({ item }: { item: any }) {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* ✅ Уменьшен шрифт и добавлен padding для корректного отображения эмодзи */}
           <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
             style={{ 
               padding: '5px 8px', borderRadius: '6px', border: 'none', 
-              fontSize: '13px', lineHeight: '1.4',
+              fontSize: '13px', lineHeight: '1.5',
               backgroundColor: status ? getColor(status) : '#374151', 
-              color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '140px'
+              color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
             }}>
             <option value="" disabled> Статус</option>
             <option value="planned">📋 В планах</option>
-            <option value="watching"> Смотрю</option>
+            <option value="watching">👀 Смотрю</option>
             <option value="watched">✅ Просмотрено</option>
             <option value="dropped">❌ Бросил</option>
           </select>
           
-          {/* ✅ Дата и время изменения статуса */}
           {updatedAt && (
             <span style={{ fontSize: '11px', color: '#6b7280', whiteSpace: 'nowrap', fontWeight: '500' }}>
               {formatShortDate(updatedAt)}
