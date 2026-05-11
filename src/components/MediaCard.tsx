@@ -16,8 +16,9 @@ export function MediaCard({ item }: { item: any }) {
 
   const checkInLibrary = async () => {
     try {
-      // ✅ ИСПРАВЛЕНО: Правильный синтаксис Supabase v2
-      const { data: { user } } = await supabase.auth.getUser()
+      // ✅ ПРОСТОЙ И НАДЁЖНЫЙ СПОСОБ: без сложной деструктуризации
+      const response = await supabase.auth.getUser()
+      const user = response.data?.user
       if (!user) return
 
       const { data, error } = await supabase
@@ -44,8 +45,9 @@ export function MediaCard({ item }: { item: any }) {
   const addToLibrary = async (newStatus: string) => {
     try {
       setLoading(true)
-      // ✅ ИСПРАВЛЕНО: Правильный синтаксис
-      const { data: { user } } = await supabase.auth.getUser()
+      // ✅ ПРОСТОЙ И НАДЁЖНЫЙ СПОСОБ
+      const response = await supabase.auth.getUser()
+      const user = response.data?.user
       if (!user) {
         alert('Войдите в аккаунт!')
         setLoading(false)
@@ -110,7 +112,14 @@ export function MediaCard({ item }: { item: any }) {
     return `${dd}.${mm}.${yy} ${hh}:${min}`
   }
 
-  // ✅ ИСПРАВЛЕНО: Теперь возвращает 🎬 для фильмов
+  // ✅ 1-3 звёзды в зависимости от рейтинга
+  const getStars = (val: number) => {
+    if (!val) return ''
+    if (val >= 8) return '⭐⭐⭐'
+    if (val >= 6) return '⭐⭐'
+    return '⭐'
+  }
+
   const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
   const getTypeLabel = () => (mediaType === 'tv' ? 'сериал' : 'фильм')
 
@@ -121,24 +130,27 @@ export function MediaCard({ item }: { item: any }) {
       )}
       <div style={{ width: '160px', flexShrink: 0, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
         <img src={getPosterUrl(item.poster_path)} style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} alt={title} />
-        <div style={{ position: 'absolute', bottom: '6px', right: '6px', background: 'rgba(0,0,0,0.85)', padding: '4px 8px', borderRadius: '6px', fontSize: '13px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span>⭐</span> {rating}
+        
+        {/* ✅ Компактный бейдж с динамическими звёздами */}
+        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span>{getStars(item.vote_average)}</span>
+          <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
         </div>
       </div>
+
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'white', lineHeight: '1.3' }}>{title}</h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{year}</span>
             <span style={{ color: '#6b7280' }}>•</span>
-            {/* ✅ ИСПРАВЛЕНО: Теперь иконка есть для обоих типов */}
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon()} {getTypeLabel()}</span>
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading} style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', color: 'white', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '500', minWidth: '140px', opacity: loading ? 0.7 : 1 }}>
             <option value="" disabled> Статус</option>
-            <option value="planned">📋 В планах</option>
+            <option value="planned"> В планах</option>
             <option value="watching">👀 Смотрю</option>
             <option value="watched">✅ Просмотрено</option>
             <option value="dropped">❌ Бросил</option>
