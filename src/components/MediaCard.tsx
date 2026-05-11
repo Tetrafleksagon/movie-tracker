@@ -37,11 +37,11 @@ export function MediaCard({ item }: { item: any }) {
   }
 
   const getColor = (s: string) => {
-  if (!s) return '#374151'        // gray-700
-  if (s === 'watched') return '#16a34a'   // green-600
-  if (s === 'watching') return '#2563eb'  // blue-600
-  if (s === 'dropped') return '#dc2626'   // red-600
-  return '#4b5563'                // gray-600
+  if (!s) return '#374151'
+  if (s === 'watched') return '#16a34a'
+  if (s === 'watching') return '#2563eb'
+  if (s === 'dropped') return '#dc2626'
+  return '#4b5563'
 }
   return (
     <div style={{ display: 'flex', gap: '12px', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: '1px solid #374151', marginBottom: '12px', width: '100%', position: 'relative' }}>
