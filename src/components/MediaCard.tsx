@@ -110,7 +110,8 @@ export function MediaCard({ item }: { item: any }) {
     return `${dd}.${mm}.${yy} ${hh}:${min}`
   }
 
-  const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '')
+  // ✅ ИСПРАВЛЕНО: Теперь возвращает 🎬 для фильмов
+  const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
   const getTypeLabel = () => (mediaType === 'tv' ? 'сериал' : 'фильм')
 
   return (
@@ -130,6 +131,7 @@ export function MediaCard({ item }: { item: any }) {
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{year}</span>
             <span style={{ color: '#6b7280' }}>•</span>
+            {/* ✅ ИСПРАВЛЕНО: Теперь иконка есть для обоих типов */}
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon()} {getTypeLabel()}</span>
           </p>
         </div>
