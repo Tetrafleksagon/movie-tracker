@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 
+type StatusHistory = { status: string; time: string }[]
+
 export function MediaCard({ item }: { item: any }) {
   const [status, setStatus] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
+  const [history, setHistory] = useState<StatusHistory>([])
   const [loading, setLoading] = useState(false)
 
   const title = item.title || item.name || 'Без названия'
@@ -16,67 +19,50 @@ export function MediaCard({ item }: { item: any }) {
 
   const checkInLibrary = async () => {
     try {
-      // ✅ ПРОСТОЙ И НАДЁЖНЫЙ СПОСОБ: без сложной деструктуризации
       const response = await supabase.auth.getUser()
       const user = response.data?.user
       if (!user) return
 
       const { data, error } = await supabase
         .from('user_media')
-        .select('status, updated_at')
+        .select('status, updated_at, status_history')
         .eq('user_id', user.id)
         .eq('tmdb_id', item.id)
         .maybeSingle()
 
-      if (error) {
-        console.error('Ошибка загрузки статуса:', error)
-        return
-      }
+      if (error) { console.error('Ошибка загрузки статуса:', error); return }
 
       if (data) {
         setStatus(data.status)
         setUpdatedAt(data.updated_at)
+        setHistory(data.status_history || [])
       }
-    } catch (err) {
-      console.error('checkInLibrary error:', err)
-    }
+    } catch (err) { console.error('checkInLibrary error:', err) }
   }
 
   const addToLibrary = async (newStatus: string) => {
     try {
       setLoading(true)
-      // ✅ ПРОСТОЙ И НАДЁЖНЫЙ СПОСОБ
       const response = await supabase.auth.getUser()
       const user = response.data?.user
-      if (!user) {
-        alert('Войдите в аккаунт!')
-        setLoading(false)
-        return
-      }
+      if (!user) { alert('Войдите в аккаунт!'); setLoading(false); return }
 
       const now = new Date().toISOString()
+      const newEntry = { status: newStatus, time: now }
 
-      const { error: cacheError } = await supabase
-        .from('media_cache')
-        .upsert({
-          tmdb_id: item.id,
-          media_type: item.media_type,
-          title,
-          poster_path: item.poster_path,
-          vote_average: item.vote_average || 0,
-          release_date: item.release_date || item.first_air_date
-        }, { onConflict: 'tmdb_id' })
+      // Добавляем новый статус в начало и оставляем только 3 последних
+      const updatedHistory = [newEntry, ...history].slice(0, 3)
 
+      const { error: cacheError } = await supabase.from('media_cache').upsert({
+        tmdb_id: item.id, media_type: item.media_type, title, poster_path: item.poster_path,
+        vote_average: item.vote_average || 0, release_date: item.release_date || item.first_air_date
+      }, { onConflict: 'tmdb_id' })
       if (cacheError) console.error('Cache error:', cacheError)
 
-      const { error: statusError } = await supabase
-        .from('user_media')
-        .upsert({
-          user_id: user.id,
-          tmdb_id: item.id,
-          status: newStatus,
-          updated_at: now
-        }, { onConflict: 'user_id,tmdb_id' })
+      const { error: statusError } = await supabase.from('user_media').upsert({
+        user_id: user.id, tmdb_id: item.id, status: newStatus, updated_at: now,
+        status_history: updatedHistory
+      }, { onConflict: 'user_id,tmdb_id' })
 
       if (statusError) {
         console.error('Status save error:', statusError)
@@ -84,6 +70,7 @@ export function MediaCard({ item }: { item: any }) {
       } else {
         setStatus(newStatus)
         setUpdatedAt(now)
+        setHistory(updatedHistory)
       }
       setLoading(false)
     } catch (err) {
@@ -112,7 +99,6 @@ export function MediaCard({ item }: { item: any }) {
     return `${dd}.${mm}.${yy} ${hh}:${min}`
   }
 
-  // ✅ 1-3 звёзды в зависимости от рейтинга
   const getStars = (val: number) => {
     if (!val) return ''
     if (val >= 8) return '⭐⭐⭐'
@@ -123,6 +109,22 @@ export function MediaCard({ item }: { item: any }) {
   const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
   const getTypeLabel = () => (mediaType === 'tv' ? 'сериал' : 'фильм')
 
+  const getStatusIcon = (s: string) => {
+    if (s === 'planned') return '📋'
+    if (s === 'watching') return '👀'
+    if (s === 'watched') return '✅'
+    if (s === 'dropped') return '❌'
+    return ''
+  }
+
+  const getStatusLabel = (s: string) => {
+    if (s === 'planned') return 'В планах'
+    if (s === 'watching') return 'Смотрю'
+    if (s === 'watched') return 'Просмотрено'
+    if (s === 'dropped') return 'Бросил'
+    return s
+  }
+
   return (
     <div style={{ display: 'flex', gap: '20px', backgroundColor: '#1f2937', padding: '20px', borderRadius: '12px', border: '1px solid #374151', marginBottom: '20px', width: '100%', position: 'relative' }}>
       {item.onDelete && (
@@ -130,8 +132,6 @@ export function MediaCard({ item }: { item: any }) {
       )}
       <div style={{ width: '160px', flexShrink: 0, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
         <img src={getPosterUrl(item.poster_path)} style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} alt={title} />
-        
-        {/* ✅ Компактный бейдж с динамическими звёздами */}
         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span>{getStars(item.vote_average)}</span>
           <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
@@ -147,16 +147,31 @@ export function MediaCard({ item }: { item: any }) {
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon()} {getTypeLabel()}</span>
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading} style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', color: 'white', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '500', minWidth: '140px', opacity: loading ? 0.7 : 1 }}>
             <option value="" disabled> Статус</option>
-            <option value="planned"> В планах</option>
+            <option value="planned">📋 В планах</option>
             <option value="watching">👀 Смотрю</option>
             <option value="watched">✅ Просмотрено</option>
             <option value="dropped">❌ Бросил</option>
           </select>
-          {updatedAt && <span style={{ fontSize: '11px', color: '#9ca3af', whiteSpace: 'nowrap', marginLeft: 'auto' }}>{formatDate(updatedAt)}</span>}
         </div>
+
+        {/* 🕰 Хронология статусов (макс. 3 записи) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px', borderTop: '1px solid #374151', paddingTop: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e5e7eb', fontWeight: '500' }}>
+            <span>{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : 'Не выбран'}</span>
+            <span style={{ color: '#9ca3af' }}>{formatDate(updatedAt)}</span>
+          </div>
+          {history.slice(1).map((h, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#6b7280' }}>
+              <span>{getStatusIcon(h.status)} {getStatusLabel(h.status)}</span>
+              <span>{formatDate(h.time)}</span>
+            </div>
+          ))}
+        </div>
+
         {loading && <span style={{ fontSize: '11px', color: '#6b7280' }}>Сохранение...</span>}
       </div>
     </div>
