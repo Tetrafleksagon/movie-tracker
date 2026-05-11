@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase'
 
 export function MediaCard({ item }: { item: any }) {
   const [status, setStatus] = useState<string | null>(null)
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const title = item.title || item.name || 'Без названия'
@@ -16,17 +15,13 @@ export function MediaCard({ item }: { item: any }) {
   const checkInLibrary = async () => {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return
-    const { data: response } = await supabase
+    const {  response } = await supabase
       .from('user_media')
-      .select('status, status_updated_at')
+      .select('status')
       .eq('user_id', data.user.id)
       .eq('tmdb_id', item.id)
       .maybeSingle()
-    
-    if (response) {
-      setStatus(response.status)
-      setUpdatedAt(response.status_updated_at || null)
-    }
+    if (response) setStatus(response.status)
   }
 
   const addToLibrary = async (newStatus: string) => {
@@ -34,7 +29,6 @@ export function MediaCard({ item }: { item: any }) {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return alert('Войдите в аккаунт!')
     const user = data.user
-    const now = new Date().toISOString()
 
     await supabase.from('media_cache').upsert({
       tmdb_id: item.id, media_type: item.media_type, title, poster_path: item.poster_path,
@@ -42,15 +36,10 @@ export function MediaCard({ item }: { item: any }) {
     }, { onConflict: 'tmdb_id' })
 
     await supabase.from('user_media').upsert({
-      user_id: user.id,
-      tmdb_id: item.id,
-      status: newStatus,
-      status_updated_at: now,
-      updated_at: now
+      user_id: user.id, tmdb_id: item.id, status: newStatus, updated_at: new Date().toISOString()
     }, { onConflict: 'user_id,tmdb_id' })
 
     setStatus(newStatus)
-    setUpdatedAt(now)
     setLoading(false)
   }
 
@@ -60,18 +49,6 @@ export function MediaCard({ item }: { item: any }) {
     if (s === 'watching') return '#2563eb'
     if (s === 'dropped') return '#dc2626'
     return '#4b5563'
-  }
-
-  // Форматирование: чч:мм дд/мм/гг (исправлено: слэш вместо точки)
-  const formatShortDate = (dateStr: string | null) => {
-    if (!dateStr) return ''
-    const d = new Date(dateStr)
-    const hh = String(d.getHours()).padStart(2, '0')
-    const mm = String(d.getMinutes()).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mo = String(d.getMonth() + 1).padStart(2, '0')
-    const yy = String(d.getFullYear()).slice(-2)
-    return `${hh}:${mm} ${dd}/${mo}/${yy}`  // ✅ Исправлено: dd/mm/yy
   }
 
   return (
@@ -90,7 +67,7 @@ export function MediaCard({ item }: { item: any }) {
         }}>×</button>
       )}
 
-      <div style={{ width: '160px', flexShrink: 0, position: 'relative', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+      <div style={{ width: '160px', flexShrink: 0, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
         <img src={getPosterUrl(item.poster_path)} style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} alt={title} />
         <div style={{ 
           position: 'absolute', bottom: '6px', right: '6px', background: 'rgba(0,0,0,0.85)', 
@@ -101,33 +78,24 @@ export function MediaCard({ item }: { item: any }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'white', lineHeight: '1.3' }}>{title}</h3>
           <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: '#9ca3af' }}>{year}</p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
-            style={{ 
-              padding: '5px 8px', borderRadius: '6px', border: 'none', 
-              fontSize: '13px', lineHeight: '1.5',
-              backgroundColor: status ? getColor(status) : '#374151', 
-              color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
-            }}>
-            <option value="" disabled> Статус</option>
-            <option value="planned">📋 В планах</option>
-            <option value="watching">👀 Смотрю</option>
-            <option value="watched">✅ Просмотрено</option>
-            <option value="dropped">❌ Бросил</option>
-          </select>
-          
-          {updatedAt && (
-            <span style={{ fontSize: '11px', color: '#6b7280', whiteSpace: 'nowrap', fontWeight: '500' }}>
-              {formatShortDate(updatedAt)}
-            </span>
-          )}
-        </div>
+        <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading}
+          style={{ 
+            padding: '6px 10px', borderRadius: '6px', border: 'none', 
+            fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', 
+            color: 'white', cursor: 'pointer', fontWeight: '500', minWidth: '150px'
+          }}>
+          <option value="" disabled> Статус</option>
+          <option value="planned">📋 В планах</option>
+          <option value="watching">👀 Смотрю</option>
+          <option value="watched">✅ Просмотрено</option>
+          <option value="dropped">❌ Бросил</option>
+        </select>
       </div>
     </div>
   )
