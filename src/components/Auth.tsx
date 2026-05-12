@@ -28,21 +28,21 @@ export function Auth() {
     }
   }
 
-  // 🔐 Обработчик сброса пароля
-  const handleForgotPassword = async () => {
-    const emailInput = prompt('Введите email для сброса пароля:')
-    if (!emailInput) return
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
-      redirectTo: `${window.location.origin}/`,
-    })
-    
-    if (error) {
-      alert('❌ Ошибка: ' + error.message)
-    } else {
-      alert('✅ Письмо со ссылкой для сброса пароля отправлено на:\n' + emailInput)
-    }
+  / 🔐 Обработчик сброса пароля
+const handleForgotPassword = async () => {
+  const emailInput = prompt('Введите email для сброса пароля:')
+  if (!emailInput) return
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
+    redirectTo: 'https://movie-tracker-2ss.pages.dev/auth/callback',
+  })
+  
+  if (error) {
+    alert('❌ Ошибка: ' + error.message)
+  } else {
+    alert('✅ Письмо отправлено на:\n' + emailInput + '\n\nПроверьте почту и перейдите по ссылке.')
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
