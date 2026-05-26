@@ -6,3 +6,11 @@ body {
   background-color: #111827; /* gray-900 */
   color: white;
 }
+@keyframes shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 300% center;
+  }
+}

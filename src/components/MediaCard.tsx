@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 
 type StatusHistory = { status: string; time: string }[]
 
 export function MediaCard({ item }: { item: any }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [history, setHistory] = useState<StatusHistory>([])
   const [loading, setLoading] = useState(false)
 
-  const title = item.title || item.name || 'Без названия'
+  const title = item.title || item.name || t('common.no_title')
   const year = (item.release_date || item.first_air_date || '').split('-')[0] || '—'
   const rating = item.vote_average ? item.vote_average.toFixed(1) : '—'
   const mediaType = item.media_type || 'movie'
@@ -45,12 +47,10 @@ export function MediaCard({ item }: { item: any }) {
       setLoading(true)
       const response = await supabase.auth.getUser()
       const user = response.data?.user
-      if (!user) { alert('Войдите в аккаунт!'); setLoading(false); return }
+      if (!user) { alert(t('auth.please_login')); setLoading(false); return }
 
       const now = new Date().toISOString()
       const newEntry = { status: newStatus, time: now }
-
-      // Добавляем новый статус в начало и оставляем только 3 последних
       const updatedHistory = [newEntry, ...history].slice(0, 3)
 
       const { error: cacheError } = await supabase.from('media_cache').upsert({
@@ -66,7 +66,7 @@ export function MediaCard({ item }: { item: any }) {
 
       if (statusError) {
         console.error('Status save error:', statusError)
-        alert('Не удалось сохранить статус.')
+        alert(t('common.error_save'))
       } else {
         setStatus(newStatus)
         setUpdatedAt(now)
@@ -75,7 +75,7 @@ export function MediaCard({ item }: { item: any }) {
       setLoading(false)
     } catch (err) {
       console.error('addToLibrary error:', err)
-      alert('Ошибка при сохранении.')
+      alert(t('common.error'))
       setLoading(false)
     }
   }
@@ -107,7 +107,9 @@ export function MediaCard({ item }: { item: any }) {
   }
 
   const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
-  const getTypeLabel = () => (mediaType === 'tv' ? 'сериал' : 'фильм')
+  
+  // ✅ Локализованный тип медиа
+  const getTypeLabel = () => t(mediaType === 'tv' ? 'media.tv_show' : 'media.movie')
 
   const getStatusIcon = (s: string) => {
     if (s === 'planned') return '📋'
@@ -117,12 +119,10 @@ export function MediaCard({ item }: { item: any }) {
     return ''
   }
 
+  // ✅ Локализованная метка статуса
   const getStatusLabel = (s: string) => {
-    if (s === 'planned') return 'В планах'
-    if (s === 'watching') return 'Смотрю'
-    if (s === 'watched') return 'Просмотрено'
-    if (s === 'dropped') return 'Бросил'
-    return s
+    const key = `status.${s}`
+    return t(key) || s
   }
 
   return (
@@ -149,19 +149,35 @@ export function MediaCard({ item }: { item: any }) {
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-          <select value={status || ''} onChange={(e) => addToLibrary(e.target.value)} disabled={loading} style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', fontSize: '14px', backgroundColor: status ? getColor(status) : '#374151', color: 'white', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '500', minWidth: '140px', opacity: loading ? 0.7 : 1 }}>
-            <option value="" disabled> Статус</option>
-            <option value="planned">📋 В планах</option>
-            <option value="watching">👀 Смотрю</option>
-            <option value="watched">✅ Просмотрено</option>
-            <option value="dropped">❌ Бросил</option>
+          <select 
+            value={status || ''} 
+            onChange={(e) => addToLibrary(e.target.value)} 
+            disabled={loading} 
+            style={{ 
+              padding: '6px 10px', 
+              borderRadius: '6px', 
+              border: 'none', 
+              fontSize: '14px', 
+              backgroundColor: status ? getColor(status) : '#374151', 
+              color: 'white', 
+              cursor: loading ? 'not-allowed' : 'pointer', 
+              fontWeight: '500', 
+              minWidth: '140px', 
+              opacity: loading ? 0.7 : 1 
+            }}
+          >
+            <option value="" disabled>— {t('status.select')} —</option>
+            <option value="planned">📋 {t('status.planned')}</option>
+            <option value="watching">👀 {t('status.watching')}</option>
+            <option value="watched">✅ {t('status.watched')}</option>
+            <option value="dropped">❌ {t('status.dropped')}</option>
           </select>
         </div>
 
         {/* 🕰 Хронология статусов (макс. 3 записи) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px', borderTop: '1px solid #374151', paddingTop: '6px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e5e7eb', fontWeight: '500' }}>
-            <span>{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : 'Не выбран'}</span>
+            <span>{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : t('status.not_selected')}</span>
             <span style={{ color: '#9ca3af' }}>{formatDate(updatedAt)}</span>
           </div>
           {history.slice(1).map((h, i) => (
@@ -172,7 +188,7 @@ export function MediaCard({ item }: { item: any }) {
           ))}
         </div>
 
-        {loading && <span style={{ fontSize: '11px', color: '#6b7280' }}>Сохранение...</span>}
+        {loading && <span style={{ fontSize: '11px', color: '#6b7280' }}>{t('common.saving')}...</span>}
       </div>
     </div>
   )

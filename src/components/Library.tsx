@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { MediaCard } from '../components/MediaCard'
 
 export function Library() {
-  const { t, i18n } = useTranslation() // ✅ Добавили i18n
+  const { t } = useTranslation()
   const [items, setItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,45 +26,22 @@ export function Library() {
   }, [activeFilter, items])
 
   const fetchLibrary = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-  // ✅ Делаем JOIN с media_cache для получения информации о фильмах
-  const { data, error } = await supabase
-    .from('user_media')
-    .select(`
-      *,
-      media_cache:media_cache (
-        tmdb_id,
-        title,
-        poster_path,
-        vote_average,
-        release_date,
-        media_type
-      )
-    `)
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
+    const { data, error } = await supabase
+      .from('user_media')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching library:', error)
-  } else {
-    // ✅ Объединяем данные из двух таблиц
-    const mergedData = data.map(item => ({
-      ...item,
-      // Берём данные из media_cache, если они есть
-      title: item.media_cache?.title || item.title || 'Без названия',
-      poster_path: item.media_cache?.poster_path || item.poster_path,
-      vote_average: item.media_cache?.vote_average || item.vote_average,
-      media_type: item.media_cache?.media_type || item.media_type || 'movie',
-      release_date: item.media_cache?.release_date || item.release_date,
-      id: item.tmdb_id // Для MediaCard нужен id
-    }))
-    
-    setItems(mergedData)
+    if (error) {
+      console.error('Error fetching library:', error)
+    } else {
+      setItems(data || [])
+    }
+    setLoading(false)
   }
-  setLoading(false)
-}
 
   return (
     <div className="space-y-6">
@@ -80,10 +57,7 @@ export function Library() {
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}
           >
-            {filter === 'all' 
-              ? t('filters.all') 
-              : t(`filters.${filter}`)
-            }
+            {filter === 'all' ? t('filters.all') : t(`filters.${filter}`)}
           </button>
         ))}
       </div>
