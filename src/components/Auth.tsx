@@ -28,22 +28,18 @@ export function Auth() {
     }
   }
 
-  / 🔐 Обработчик сброса пароля
+  // 🔐 Обработчик сброса пароля
 const handleForgotPassword = async () => {
   const emailInput = prompt('Введите email для сброса пароля:')
   if (!emailInput) return
   
   const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
-    redirectTo: 'https://movie-tracker-2ss.pages.dev/auth/callback',
+    redirectTo: 'https://filmtrack.pp.ua/reset-password.html',
   })
   
-  if (error) {
-    alert('❌ Ошибка: ' + error.message)
-  } else {
-    alert('✅ Письмо отправлено на:\n' + emailInput + '\n\nПроверьте почту и перейдите по ссылке.')
-  }
+  if (error) alert('❌ Ошибка: ' + error.message)
+  else alert('✅ Письмо отправлено на: ' + emailInput)
 }
-
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <form onSubmit={handleAuth} className="bg-gray-800 p-6 rounded-xl w-full max-w-md space-y-4">
