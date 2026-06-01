@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "agentmemory": {
+      "type": "stdio",
+      "command": ["npx", "-y", "@agentmemory/agentmemory", "mcp"],
+      "enabled": true,
+      "env": {
+        "AGENTMEMORY_CONFIG_FILE": "D:\\Projects\\agentmemory-config\\.env"
+      }
+    }
+  }
+}

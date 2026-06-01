@@ -33,6 +33,7 @@ export function Auth() {
     }
   }
 
+<<<<<<< Updated upstream
   const handleForgotPassword = async () => {
     const emailInput = prompt(t('auth.enter_email_reset') || 'Enter your email:')
     if (!emailInput) return
@@ -49,6 +50,21 @@ export function Auth() {
     } else {
       alert(t('auth.reset_sent'))
     }
+=======
+  // 🔐 Обработчик сброса пароля
+const handleForgotPassword = async () => {
+  const emailInput = prompt('Введите email для сброса пароля:')
+  if (!emailInput) return
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
+    redirectTo: 'https://movie-tracker-2ss.pages.dev',  // ← Без # в конце!
+  })
+  
+  if (error) {
+    alert('❌ Ошибка: ' + error.message)
+  } else {
+    alert('✅ Письмо отправлено на:\n' + emailInput)
+>>>>>>> Stashed changes
   }
 
     return (

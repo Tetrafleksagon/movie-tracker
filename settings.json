@@ -1,0 +1,8 @@
+{
+  "terminal.integrated.env.windows": {
+    "XDG_CONFIG_HOME": "D:\\Projects\\config",
+    "XDG_DATA_HOME": "D:\\Projects\\data",
+    "XDG_CACHE_HOME": "D:\\Projects\\cache",
+    "AGENTMEMORY_CONFIG_FILE": "D:\\Projects\\agentmemory-config\\.env"
+  }
+}

@@ -1,0 +1,21 @@
+﻿{
+    "mcp":  {
+                "agentmemory":  {
+                                    "env":  {
+                                                "OPENAI_BASE_URL":  "http://localhost:1234/v1",
+                                                "AGENTMEMORY_CONFIG_FILE":  "D:\\Projects\\agentmemory-config\\.env",
+                                                "OPENAI_API_KEY":  "lmstudio",
+                                                "OPENAI_MODEL":  "qwen2.5-coder-7b-instruct"
+                                            },
+                                    "command":  [
+                                                    "npx",
+                                                    "-y",
+                                                    "@agentmemory/agentmemory",
+                                                    "mcp"
+                                                ],
+                                    "type":  "stdio",
+                                    "enabled":  true
+                                }
+            },
+    "$schema":  "https://opencode.ai/config.json"
+}
