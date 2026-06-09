@@ -132,7 +132,7 @@ export function MediaCard({ item }: { item: any }) {
       )}
 
       {/* Постер */}
-      <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40 sm:h-60" style={{ aspectRatio: '3/2' }}>
+      <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40 sm:h-60" style={{ aspectRatio: '2/3' }}>
         <img
           src={getPosterUrl(item.poster_path)}
           className="absolute inset-0 w-full h-full object-cover object-top"
