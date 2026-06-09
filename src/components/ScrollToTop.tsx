@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 export function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
   useEffect(() => {
-    const toggle = () => window.pageYOffset > 300 ? setIsVisible(true) : setIsVisible(false)
+    const toggle = () => window.pageYOffset > 100 ? setIsVisible(true) : setIsVisible(false)
     window.addEventListener('scroll', toggle)
     return () => window.removeEventListener('scroll', toggle)
   }, [])

@@ -177,13 +177,13 @@ export function MediaCard({ item }: { item: any }) {
 
         {/* История статусов */}
         <div className="flex flex-col gap-0.5 mt-1 border-t border-gray-700 pt-2">
-          <div className="flex flex-wrap gap-x-2 justify-between text-xs text-gray-200 font-medium">
-            <span className="min-w-0">{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : t('status.not_selected')}</span>
+          <div className="flex gap-x-4 text-xs text-gray-200 font-medium">
+            <span>{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : t('status.not_selected')}</span>
             <span className="text-gray-400 whitespace-nowrap">{formatDate(updatedAt)}</span>
           </div>
           {history.slice(1).map((h, i) => (
-            <div key={i} className="flex flex-wrap gap-x-2 justify-between text-xs text-gray-500">
-              <span className="min-w-0">{getStatusIcon(h.status)} {getStatusLabel(h.status)}</span>
+            <div key={i} className="flex gap-x-4 text-xs text-gray-500">
+              <span>{getStatusIcon(h.status)} {getStatusLabel(h.status)}</span>
               <span className="whitespace-nowrap">{formatDate(h.time)}</span>
             </div>
           ))}
