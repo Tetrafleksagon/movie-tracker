@@ -6,6 +6,14 @@ body {
   background-color: #111827; /* gray-900 */
   color: white;
 }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes shimmer {
   0% {
     background-position: 0% center;

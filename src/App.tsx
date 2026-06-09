@@ -4,6 +4,7 @@ import { Auth } from './components/Auth'
 import { Search } from './components/Search'
 import { Library } from './components/Library'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
+import { ScrollToTop } from './components/ScrollToTop'
 import { supabase } from './lib/supabase'
 import { useTranslation } from 'react-i18next'
 
@@ -15,7 +16,7 @@ function Navigation() {
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:justify-between items-center gap-2">
         <h1
           className="text-2xl sm:text-4xl font-bold whitespace-nowrap"
           style={{
@@ -31,7 +32,7 @@ function Navigation() {
         >
           🎬 Movie Tracker
         </h1>
-        <nav className="flex items-center gap-3 sm:gap-6 flex-wrap">
+        <nav className="flex items-center gap-4 sm:gap-6">
           <Link
             to="/"
             className={`text-sm font-medium transition ${
@@ -88,6 +89,7 @@ function AppContent() {
         <Route path="/" element={<Search />} />
         <Route path="/library" element={<Library />} />
       </Routes>
+      <ScrollToTop />
     </div>
   )
 }

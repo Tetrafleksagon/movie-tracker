@@ -65,12 +65,12 @@ export function Library() {
   return (
     <div className="space-y-6">
       {/* Фильтры по статусам */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-1">
         {filters.map(filter => (
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition flex-shrink-0 ${
               activeFilter === filter
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
