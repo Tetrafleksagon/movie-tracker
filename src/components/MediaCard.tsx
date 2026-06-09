@@ -126,44 +126,46 @@ export function MediaCard({ item }: { item: any }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '20px', backgroundColor: '#1f2937', padding: '20px', borderRadius: '12px', border: '1px solid #374151', marginBottom: '20px', width: '100%', position: 'relative' }}>
+    <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 bg-gray-800 p-4 rounded-xl border border-gray-700 mb-5 w-full relative">
       {item.onDelete && (
         <button onClick={item.onDelete} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(220,38,38,0.2)', border: 'none', color: '#ef4444', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>×</button>
       )}
-      <div style={{ width: '160px', flexShrink: 0, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
-        <img src={getPosterUrl(item.poster_path)} style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} alt={title} />
+
+      {/* Постер */}
+      <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40">
+        <img
+          src={getPosterUrl(item.poster_path)}
+          className="w-full object-cover block"
+          style={{ height: '200px' }}
+          alt={title}
+        />
         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span>{getStars(item.vote_average)}</span>
           <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+      {/* Контент */}
+      <div className="flex flex-col gap-2 justify-center min-w-0 flex-1">
         <div>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'white', lineHeight: '1.3' }}>{title}</h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 className="m-0 text-lg font-bold text-white leading-snug break-words">{title}</h3>
+          <p className="mt-1 text-sm text-gray-400 flex items-center gap-2 flex-wrap">
             <span>{year}</span>
-            <span style={{ color: '#6b7280' }}>•</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon()} {getTypeLabel()}</span>
+            <span className="text-gray-600">•</span>
+            <span className="flex items-center gap-1">{getTypeIcon()} {getTypeLabel()}</span>
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-          <select 
-            value={status || ''} 
-            onChange={(e) => addToLibrary(e.target.value)} 
-            disabled={loading} 
-            style={{ 
-              padding: '6px 10px', 
-              borderRadius: '6px', 
-              border: 'none', 
-              fontSize: '14px', 
-              backgroundColor: status ? getColor(status) : '#374151', 
-              color: 'white', 
-              cursor: loading ? 'not-allowed' : 'pointer', 
-              fontWeight: '500', 
-              minWidth: '140px', 
-              opacity: loading ? 0.7 : 1 
+        <div>
+          <select
+            value={status || ''}
+            onChange={(e) => addToLibrary(e.target.value)}
+            disabled={loading}
+            className="w-full sm:w-auto rounded-md text-sm text-white font-medium py-1.5 px-2.5 border-none cursor-pointer"
+            style={{
+              backgroundColor: status ? getColor(status) : '#374151',
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
             }}
           >
             <option value="" disabled>— {t('status.select')} —</option>
@@ -174,21 +176,21 @@ export function MediaCard({ item }: { item: any }) {
           </select>
         </div>
 
-        {/* 🕰 Хронология статусов (макс. 3 записи) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px', borderTop: '1px solid #374151', paddingTop: '6px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e5e7eb', fontWeight: '500' }}>
-            <span>{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : t('status.not_selected')}</span>
-            <span style={{ color: '#9ca3af' }}>{formatDate(updatedAt)}</span>
+        {/* История статусов */}
+        <div className="flex flex-col gap-0.5 mt-1 border-t border-gray-700 pt-2">
+          <div className="flex flex-wrap gap-x-2 justify-between text-xs text-gray-200 font-medium">
+            <span className="min-w-0">{status ? `${getStatusIcon(status)} ${getStatusLabel(status)}` : t('status.not_selected')}</span>
+            <span className="text-gray-400 whitespace-nowrap">{formatDate(updatedAt)}</span>
           </div>
           {history.slice(1).map((h, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#6b7280' }}>
-              <span>{getStatusIcon(h.status)} {getStatusLabel(h.status)}</span>
-              <span>{formatDate(h.time)}</span>
+            <div key={i} className="flex flex-wrap gap-x-2 justify-between text-xs text-gray-500">
+              <span className="min-w-0">{getStatusIcon(h.status)} {getStatusLabel(h.status)}</span>
+              <span className="whitespace-nowrap">{formatDate(h.time)}</span>
             </div>
           ))}
         </div>
 
-        {loading && <span style={{ fontSize: '11px', color: '#6b7280' }}>{t('common.saving')}...</span>}
+        {loading && <span className="text-xs text-gray-500">{t('common.saving')}...</span>}
       </div>
     </div>
   )
