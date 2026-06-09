@@ -14,25 +14,24 @@ function Navigation() {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <h1 
-  style={{
-    fontSize: '42px',
-    fontWeight: 'bold',
-    letterSpacing: '-0.5px',
-    background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
-    backgroundSize: '300% 100%',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-    animation: 'shimmer 2s linear infinite',
-    filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
-  }}
->
-  🎬 Movie Tracker
-</h1>
-        <nav className="flex items-center gap-6">
+    <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+        <h1
+          className="text-2xl sm:text-4xl font-bold whitespace-nowrap"
+          style={{
+            letterSpacing: '-0.5px',
+            background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
+            backgroundSize: '300% 100%',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: 'shimmer 2s linear infinite',
+            filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
+          }}
+        >
+          🎬 Movie Tracker
+        </h1>
+        <nav className="flex items-center gap-3 sm:gap-6 flex-wrap">
           <Link
             to="/"
             className={`text-sm font-medium transition ${
