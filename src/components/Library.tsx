@@ -31,14 +31,33 @@ export function Library() {
 
     const { data, error } = await supabase
       .from('user_media')
-      .select('*')
+      .select(`
+        *,
+        media_cache:media_cache (
+          tmdb_id,
+          title,
+          poster_path,
+          vote_average,
+          release_date,
+          media_type
+        )
+      `)
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching library:', error)
     } else {
-      setItems(data || [])
+      const mergedData = (data || []).map(item => ({
+        ...item,
+        title: item.media_cache?.title || item.title || 'Без названия',
+        poster_path: item.media_cache?.poster_path || item.poster_path,
+        vote_average: item.media_cache?.vote_average || item.vote_average,
+        media_type: item.media_cache?.media_type || item.media_type || 'movie',
+        release_date: item.media_cache?.release_date || item.release_date,
+        id: item.tmdb_id,
+      }))
+      setItems(mergedData)
     }
     setLoading(false)
   }
