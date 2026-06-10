@@ -87,7 +87,7 @@ export function Library() {
 
     const { data, error } = await supabase
       .from('user_media')
-      .select(`*, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)`)
+      .select(`*, user_rating, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)`)
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 

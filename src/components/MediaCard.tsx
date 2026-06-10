@@ -5,12 +5,20 @@ import { supabase } from '../lib/supabase'
 
 type StatusHistory = { status: string; time: string }[]
 
+const RATING_COLORS: Record<number, string> = {
+  1: '#7f1d1d', 2: '#991b1b', 3: '#b91c1c',
+  4: '#92400e', 5: '#b45309', 6: '#d97706',
+  7: '#166534', 8: '#15803d', 9: '#16a34a', 10: '#22c55e',
+}
+
 export function MediaCard({ item }: { item: any }) {
   const { t } = useTranslation()
   const [status, setStatus] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [history, setHistory] = useState<StatusHistory>([])
   const [loading, setLoading] = useState(false)
+  const [userRating, setUserRating] = useState<number | null>(null)
+  const [hoverRating, setHoverRating] = useState<number | null>(null)
 
   const title = item.title || item.name || t('common.no_title')
   const year = (item.release_date || item.first_air_date || '').split('-')[0] || '—'
@@ -21,23 +29,23 @@ export function MediaCard({ item }: { item: any }) {
 
   const checkInLibrary = async () => {
     try {
-      const response = await supabase.auth.getUser()
-      const user = response.data?.user
+      const user = (await supabase.auth.getUser()).data?.user
       if (!user) return
 
       const { data, error } = await supabase
         .from('user_media')
-        .select('status, updated_at, status_history')
+        .select('status, updated_at, status_history, user_rating')
         .eq('user_id', user.id)
         .eq('tmdb_id', item.id)
         .maybeSingle()
 
-      if (error) { console.error('Ошибка загрузки статуса:', error); return }
+      if (error) { console.error('checkInLibrary error:', error); return }
 
       if (data) {
         setStatus(data.status)
         setUpdatedAt(data.updated_at)
         setHistory(data.status_history || [])
+        setUserRating(data.user_rating ?? null)
       }
     } catch (err) { console.error('checkInLibrary error:', err) }
   }
@@ -45,13 +53,11 @@ export function MediaCard({ item }: { item: any }) {
   const addToLibrary = async (newStatus: string) => {
     try {
       setLoading(true)
-      const response = await supabase.auth.getUser()
-      const user = response.data?.user
+      const user = (await supabase.auth.getUser()).data?.user
       if (!user) { alert(t('auth.please_login')); setLoading(false); return }
 
       const now = new Date().toISOString()
-      const newEntry = { status: newStatus, time: now }
-      const updatedHistory = [newEntry, ...history].slice(0, 3)
+      const updatedHistory = [{ status: newStatus, time: now }, ...history].slice(0, 3)
 
       const { error: cacheError } = await supabase.from('media_cache').upsert({
         tmdb_id: item.id, media_type: item.media_type, title, poster_path: item.poster_path,
@@ -59,25 +65,29 @@ export function MediaCard({ item }: { item: any }) {
       }, { onConflict: 'tmdb_id' })
       if (cacheError) console.error('Cache error:', cacheError)
 
-      const { error: statusError } = await supabase.from('user_media').upsert({
+      const { error } = await supabase.from('user_media').upsert({
         user_id: user.id, tmdb_id: item.id, status: newStatus, updated_at: now,
         status_history: updatedHistory
       }, { onConflict: 'user_id,tmdb_id' })
 
-      if (statusError) {
-        console.error('Status save error:', statusError)
-        alert(t('common.error_save'))
-      } else {
-        setStatus(newStatus)
-        setUpdatedAt(now)
-        setHistory(updatedHistory)
-      }
+      if (error) { console.error('Status save error:', error); alert(t('common.error_save')) }
+      else { setStatus(newStatus); setUpdatedAt(now); setHistory(updatedHistory) }
       setLoading(false)
     } catch (err) {
       console.error('addToLibrary error:', err)
       alert(t('common.error'))
       setLoading(false)
     }
+  }
+
+  const saveRating = async (n: number) => {
+    const user = (await supabase.auth.getUser()).data?.user
+    if (!user) return
+    const newRating = userRating === n ? null : n
+    const { error } = await supabase.from('user_media').upsert({
+      user_id: user.id, tmdb_id: item.id, user_rating: newRating,
+    }, { onConflict: 'user_id,tmdb_id' })
+    if (!error) setUserRating(newRating)
   }
 
   const getColor = (s: string) => {
@@ -91,12 +101,8 @@ export function MediaCard({ item }: { item: any }) {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yy = String(d.getFullYear()).slice(-2)
-    const hh = String(d.getHours()).padStart(2, '0')
-    const min = String(d.getMinutes()).padStart(2, '0')
-    return `${dd}.${mm}.${yy} ${hh}:${min}`
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
   const getStars = (val: number) => {
@@ -107,23 +113,11 @@ export function MediaCard({ item }: { item: any }) {
   }
 
   const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
-  
-  // ✅ Локализованный тип медиа
   const getTypeLabel = () => t(mediaType === 'tv' ? 'media.tv_show' : 'media.movie')
+  const getStatusIcon = (s: string) => ({ planned: '📋', watching: '👀', watched: '✅', dropped: '❌' }[s] || '')
+  const getStatusLabel = (s: string) => t(`status.${s}`) || s
 
-  const getStatusIcon = (s: string) => {
-    if (s === 'planned') return '📋'
-    if (s === 'watching') return '👀'
-    if (s === 'watched') return '✅'
-    if (s === 'dropped') return '❌'
-    return ''
-  }
-
-  // ✅ Локализованная метка статуса
-  const getStatusLabel = (s: string) => {
-    const key = `status.${s}`
-    return t(key) || s
-  }
+  const activeRating = hoverRating ?? userRating ?? 0
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 bg-gray-800 p-4 rounded-xl border border-gray-700 mb-5 w-full relative">
@@ -133,11 +127,7 @@ export function MediaCard({ item }: { item: any }) {
 
       {/* Постер */}
       <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40 sm:h-60" style={{ aspectRatio: '2/3' }}>
-        <img
-          src={getPosterUrl(item.poster_path)}
-          className="absolute inset-0 w-full h-full object-cover object-top"
-          alt={title}
-        />
+        <img src={getPosterUrl(item.poster_path)} className="absolute inset-0 w-full h-full object-cover object-top" alt={title} />
         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span>{getStars(item.vote_average)}</span>
           <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
@@ -155,24 +145,43 @@ export function MediaCard({ item }: { item: any }) {
           </p>
         </div>
 
-        <div>
-          <select
-            value={status || ''}
-            onChange={(e) => addToLibrary(e.target.value)}
-            disabled={loading}
-            className="w-full sm:w-auto rounded-md text-sm text-white font-medium py-1.5 px-2.5 border-none cursor-pointer"
-            style={{
-              backgroundColor: status ? getColor(status) : '#374151',
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <option value="" disabled>— {t('status.select')} —</option>
-            <option value="planned">📋 {t('status.planned')}</option>
-            <option value="watching">👀 {t('status.watching')}</option>
-            <option value="watched">✅ {t('status.watched')}</option>
-            <option value="dropped">❌ {t('status.dropped')}</option>
-          </select>
+        <select
+          value={status || ''}
+          onChange={(e) => addToLibrary(e.target.value)}
+          disabled={loading}
+          className="w-full sm:w-auto rounded-md text-sm text-white font-medium py-1.5 px-2.5 border-none cursor-pointer"
+          style={{ backgroundColor: status ? getColor(status) : '#374151', opacity: loading ? 0.7 : 1 }}
+        >
+          <option value="" disabled>— {t('status.select')} —</option>
+          <option value="planned">📋 {t('status.planned')}</option>
+          <option value="watching">👀 {t('status.watching')}</option>
+          <option value="watched">✅ {t('status.watched')}</option>
+          <option value="dropped">❌ {t('status.dropped')}</option>
+        </select>
+
+        {/* Личный рейтинг */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => {
+            const isActive = n <= activeRating
+            const color = isActive ? RATING_COLORS[n] : '#374151'
+            return (
+              <button
+                key={n}
+                onClick={() => saveRating(n)}
+                onMouseEnter={() => setHoverRating(n)}
+                onMouseLeave={() => setHoverRating(null)}
+                title={String(n)}
+                style={{ backgroundColor: color, width: '24px', height: '24px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: isActive ? '#fff' : '#6b7280', transition: 'background-color 0.1s' }}
+              >
+                {n}
+              </button>
+            )
+          })}
+          {userRating && (
+            <span className="text-xs text-gray-400 ml-1">
+              {userRating}/10
+            </span>
+          )}
         </div>
 
         {/* История статусов */}
