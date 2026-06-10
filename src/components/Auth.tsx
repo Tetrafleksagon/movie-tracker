@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { LanguageSwitcher } from './LanguageSwitcher' // ✅ Добавляем импорт
 
 export function Auth() {
   const { t } = useTranslation()
@@ -52,19 +51,10 @@ export function Auth() {
   }
 
     return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      
-      {/* Контейнер, объединяющий переключатель и форму */}
-      <div className="relative w-full max-w-md">
-        
-        {/* ✅ Переключатель языков теперь над плашкой */}
-        <div className="flex justify-end mb-2">
-          <LanguageSwitcher />
-        </div>
-
-        {/* Плашка формы */}
+    <div className="flex items-center justify-center p-4 py-16">
+      <div className="w-full max-w-md">
         <form onSubmit={handleAuth} className="bg-gray-800 p-6 rounded-xl w-full space-y-4 shadow-xl">
-          <h2 className="text-2xl font-bold text-white text-center"> Movie Tracker</h2>
+          <h2 className="text-2xl font-bold text-white text-center">🎬 Movie Tracker</h2>
           
           <input 
             type="email" 
