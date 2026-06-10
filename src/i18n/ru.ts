@@ -3,6 +3,7 @@ export default {
   header: {
     search: "Поиск",
     library: "Библиотека",
+    stats: "Статистика",
     logout: "Выйти",
     sign_in: "Войти"
   },
@@ -103,5 +104,20 @@ export default {
     empty: "Библиотека пуста",
     items: "записей",
     open_app: "Открыть приложение →"
+  },
+  stats: {
+    title: "Статистика",
+    empty: "Библиотека пуста — статистики пока нет",
+    total: "Всего",
+    movies: "Фильмы",
+    tv_shows: "Сериалы",
+    rated: "С оценкой",
+    avg_score: "Средняя оценка",
+    tmdb_avg: "Средний TMDB",
+    by_status: "По статусам",
+    rating_distribution: "Распределение оценок",
+    no_ratings: "Вы ещё не ставили оценок",
+    by_decade: "По десятилетиям",
+    top_rated: "Лучшее по вашей оценке"
   }
 } as const

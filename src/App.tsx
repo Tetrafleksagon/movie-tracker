@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { Auth } from './components/Auth'
 import { Search } from './components/Search'
 import { Library } from './components/Library'
+import { Stats } from './components/Stats'
 import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
@@ -17,9 +18,9 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto grid grid-cols-3 items-center gap-2">
-        <div className="hidden sm:block" />
+        <div className="hidden xl:block" />
         <h1
-          className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 sm:col-span-1"
+          className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 xl:col-span-1"
           style={{
             letterSpacing: '-0.5px',
             background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
@@ -33,7 +34,7 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
         >
           🎬 Movie Tracker
         </h1>
-        <nav className="flex items-center justify-end gap-4 sm:gap-6 col-span-3 sm:col-span-1">
+        <nav className="flex items-center justify-end gap-4 sm:gap-6 col-span-3 xl:col-span-1">
           <Link
             to="/"
             className={`text-sm font-medium transition ${
@@ -49,6 +50,16 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
             }`}
           >
             {t('header.library')}
+          </Link>
+          <Link
+            to="/stats"
+            title={t('header.stats')}
+            className={`text-sm font-medium transition ${
+              isActive('/stats') ? 'text-blue-400' : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            <span className="sm:hidden">📊</span>
+            <span className="hidden sm:inline">{t('header.stats')}</span>
           </Link>
           <LanguageSwitcher />
           {!authLoading && (
@@ -87,6 +98,16 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
               ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
               : user
                 ? <Library />
+                : <Auth />
+          }
+        />
+        <Route
+          path="/stats"
+          element={
+            authLoading
+              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
+              : user
+                ? <Stats />
                 : <Auth />
           }
         />

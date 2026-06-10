@@ -3,6 +3,7 @@ export default {
   header: {
     search: "Search",
     library: "Library",
+    stats: "Stats",
     logout: "Logout",
     sign_in: "Sign In"
   },
@@ -103,5 +104,20 @@ export default {
     empty: "Library is empty",
     items: "items",
     open_app: "Open App →"
+  },
+  stats: {
+    title: "Statistics",
+    empty: "Your library is empty — no stats yet",
+    total: "Total",
+    movies: "Movies",
+    tv_shows: "TV Shows",
+    rated: "Rated",
+    avg_score: "Avg score",
+    tmdb_avg: "TMDB avg",
+    by_status: "By status",
+    rating_distribution: "Rating distribution",
+    no_ratings: "You haven't rated anything yet",
+    by_decade: "By decade",
+    top_rated: "Your top rated"
   }
 } as const
