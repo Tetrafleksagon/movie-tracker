@@ -99,13 +99,17 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
           {/* Backdrop / trailer */}
           <div className="relative h-52 sm:h-72 flex-shrink-0 bg-gray-900">
             {playTrailer && trailer ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
-                title={title}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <div className="w-full h-full bg-black flex flex-col">
+                {/* Spacer so the close button sits clear of YouTube's top bar */}
+                <div className="h-10 flex-shrink-0" />
+                <iframe
+                  src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                  title={title}
+                  className="w-full flex-1"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             ) : (
               <>
                 {backdrop ? (
