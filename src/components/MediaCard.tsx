@@ -84,10 +84,13 @@ export function MediaCard({ item }: { item: any }) {
     const user = (await supabase.auth.getUser()).data?.user
     if (!user) return
     const newRating = userRating === n ? null : n
-    const { error } = await supabase.from('user_media').upsert({
-      user_id: user.id, tmdb_id: item.id, user_rating: newRating,
-    }, { onConflict: 'user_id,tmdb_id' })
-    if (!error) setUserRating(newRating)
+    const { error } = await supabase
+      .from('user_media')
+      .update({ user_rating: newRating })
+      .eq('user_id', user.id)
+      .eq('tmdb_id', item.id)
+    if (error) console.error('Rating save error:', error)
+    else setUserRating(newRating)
   }
 
   const getColor = (s: string) => {
