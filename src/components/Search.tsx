@@ -497,12 +497,12 @@ export function Search() {
 
             {randomPick ? (
               <div className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl">
-                <div className="h-64 sm:h-80 relative">
+                <div className="h-64 sm:h-80 lg:h-[28rem] relative">
                   {randomPick.backdrop_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w1280${randomPick.backdrop_path}`}
                       alt={randomPick.title || randomPick.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-[center_30%]"
                     />
                   ) : randomPick.poster_path ? (
                     <img
