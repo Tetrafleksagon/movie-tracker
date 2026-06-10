@@ -80,7 +80,12 @@ export default {
   library: {
     empty: "Your library is empty",
     no_matches: "No items match this filter",
-    start_searching: "Search for movies and add them to your library"
+    start_searching: "Search for movies and add them to your library",
+    search_placeholder: "Search library...",
+    sort_date: "Date",
+    sort_rating: "TMDB",
+    sort_title: "A→Z",
+    sort_user_rating: "My score"
   },
   share: {
     button: "Share",

@@ -80,7 +80,12 @@ export default {
   library: {
     empty: "Ваша библиотека пуста",
     no_matches: "По этому фильтру ничего не найдено",
-    start_searching: "Найдите фильмы и добавьте их в библиотеку"
+    start_searching: "Найдите фильмы и добавьте их в библиотеку",
+    search_placeholder: "Поиск в библиотеке...",
+    sort_date: "Дата",
+    sort_rating: "TMDB",
+    sort_title: "А→Я",
+    sort_user_rating: "Моя оценка"
   },
   share: {
     button: "Поделиться",

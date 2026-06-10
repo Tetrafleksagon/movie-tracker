@@ -12,6 +12,8 @@ export function Library() {
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'date' | 'rating' | 'title' | 'user_rating'>('date')
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [currentIndex, setCurrentIndex] = useState(1)
@@ -30,12 +32,21 @@ export function Library() {
   }, [])
 
   useEffect(() => {
-    setFilteredItems(activeFilter === 'all' ? items : items.filter(i => i.status === activeFilter))
-  }, [activeFilter, items])
+    let base = activeFilter === 'all' ? items : items.filter(i => i.status === activeFilter)
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      base = base.filter(i => (i.title || '').toLowerCase().includes(q))
+    }
+    const sorted = [...base]
+    if (sortBy === 'title') sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+    else if (sortBy === 'rating') sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+    else if (sortBy === 'user_rating') sorted.sort((a, b) => (b.user_rating || 0) - (a.user_rating || 0))
+    setFilteredItems(sorted)
+  }, [activeFilter, items, searchQuery, sortBy])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [activeFilter, pageSize])
+  }, [activeFilter, pageSize, searchQuery, sortBy])
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -168,6 +179,37 @@ export function Library() {
               🔗 {t('share.button')}
             </button>
           )}
+        </div>
+        {/* Search + Sort */}
+        <div className="flex items-center gap-2 mt-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder={t('library.search_placeholder')}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full py-1.5 pl-3 pr-7 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
+              >×</button>
+            )}
+          </div>
+          <div className="flex gap-1 flex-shrink-0">
+            {(['date', 'rating', 'title', 'user_rating'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setSortBy(s)}
+                className={`px-2 py-1 rounded text-xs font-medium transition ${
+                  sortBy === s ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                }`}
+              >
+                {t(`library.sort_${s}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
