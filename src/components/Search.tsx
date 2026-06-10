@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
@@ -20,6 +20,60 @@ function getStatusColor(s: string) {
   if (s === 'dropped') return '#dc2626'
   if (s === 'planned') return '#4b5563'
   return '#374151'
+}
+
+function ScrollRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [canLeft, setCanLeft] = useState(false)
+  const [canRight, setCanRight] = useState(false)
+
+  const check = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    setCanLeft(el.scrollLeft > 8)
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+  }, [])
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', check)
+      ro.disconnect()
+    }
+  }, [check])
+
+  return (
+    <div className="relative">
+      <div
+        ref={ref}
+        className="flex gap-3 overflow-x-auto pb-2"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}
+      >
+        {children}
+      </div>
+      {canLeft && (
+        <div
+          className="absolute left-0 top-0 bottom-2 w-14 flex items-center justify-center pointer-events-none"
+          style={{ background: 'linear-gradient(to right, #111827 25%, transparent)' }}
+        >
+          <span className="text-white/60 text-4xl leading-none select-none">‹</span>
+        </div>
+      )}
+      {canRight && (
+        <div
+          className="absolute right-0 top-0 bottom-2 w-14 flex items-center justify-center pointer-events-none"
+          style={{ background: 'linear-gradient(to left, #111827 25%, transparent)' }}
+        >
+          <span className="text-white/60 text-4xl leading-none select-none">›</span>
+        </div>
+      )}
+    </div>
+  )
 }
 
 type CardTileProps = {
@@ -507,7 +561,7 @@ export function Search() {
             {homeLoading ? (
               <p className="text-sm text-gray-500">{t('common.loading')}</p>
             ) : (
-              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
+              <ScrollRow>
                 {trending.map(item => (
                   <CardTile
                     key={item.id}
@@ -517,7 +571,7 @@ export function Search() {
                     onClick={() => setSelectedItem(item)}
                   />
                 ))}
-              </div>
+              </ScrollRow>
             )}
           </section>
 
@@ -525,7 +579,7 @@ export function Search() {
           {!homeLoading && genres.map(genre => (
             <section key={genre.id}>
               <h2 className="text-lg font-bold text-gray-100 mb-3">{t(genre.key)}</h2>
-              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
+              <ScrollRow>
                 {genre.movies.map(item => (
                   <CardTile
                     key={item.id}
@@ -535,7 +589,7 @@ export function Search() {
                     onClick={() => setSelectedItem(item)}
                   />
                 ))}
-              </div>
+              </ScrollRow>
             </section>
           ))}
         </div>
