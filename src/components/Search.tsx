@@ -418,7 +418,7 @@ export function Search() {
 
             {randomPick ? (
               <div className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl">
-                <div className="h-52 sm:h-64 relative">
+                <div className="h-60 sm:h-72 relative">
                   {randomPick.backdrop_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w1280${randomPick.backdrop_path}`}
@@ -446,6 +446,11 @@ export function Search() {
                       {(randomPick.release_date || randomPick.first_air_date || '').split('-')[0]}
                       {randomPick.vote_average > 0 && ` · ⭐ ${randomPick.vote_average.toFixed(1)}`}
                     </p>
+                    {randomPick.overview && (
+                      <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 max-w-lg leading-relaxed">
+                        {randomPick.overview}
+                      </p>
+                    )}
                   </div>
                   <select
                     value={itemStatuses[randomPick.id] || ''}
