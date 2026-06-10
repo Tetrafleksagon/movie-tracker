@@ -30,27 +30,32 @@ type CardTileProps = {
 function CardTile({ item, status, onStatus }: CardTileProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex-shrink-0 w-32 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer">
+    <div className="flex-shrink-0 w-40 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col">
       {item.poster_path ? (
         <img
           src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
           alt={item.title || item.name}
-          className="w-full h-44 object-cover"
+          className="w-full h-52 object-cover"
           loading="lazy"
         />
       ) : (
-        <div className="w-full h-44 bg-gray-700 flex items-center justify-center">
+        <div className="w-full h-52 bg-gray-700 flex items-center justify-center">
           <span className="text-gray-500 text-xs text-center px-1">{item.title || item.name}</span>
         </div>
       )}
-      <div className="p-2">
-        <h3 className="text-xs font-semibold mb-1.5 leading-tight line-clamp-2" style={{ minHeight: '2.25rem' }}>
+      <div className="p-2 flex flex-col gap-1.5 flex-1">
+        <h3 className="text-xs font-semibold leading-tight line-clamp-2">
           {item.title || item.name}
         </h3>
+        {item.overview && (
+          <p className="text-xs text-gray-400 leading-relaxed line-clamp-4 flex-1">
+            {item.overview}
+          </p>
+        )}
         <select
           value={status || ''}
           onChange={e => { if (e.target.value) onStatus(e.target.value) }}
-          className="w-full py-1 px-1 rounded text-xs text-white font-medium cursor-pointer border-none focus:outline-none"
+          className="w-full py-1 px-1 rounded text-xs text-white font-medium cursor-pointer border-none focus:outline-none mt-auto"
           style={{ backgroundColor: getStatusColor(status) }}
         >
           <option value="" disabled>+ {t('common.add')}</option>
@@ -418,7 +423,7 @@ export function Search() {
 
             {randomPick ? (
               <div className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl">
-                <div className="h-60 sm:h-72 relative">
+                <div className="h-64 sm:h-80 relative">
                   {randomPick.backdrop_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w1280${randomPick.backdrop_path}`}
@@ -447,7 +452,7 @@ export function Search() {
                       {randomPick.vote_average > 0 && ` · ⭐ ${randomPick.vote_average.toFixed(1)}`}
                     </p>
                     {randomPick.overview && (
-                      <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 max-w-lg leading-relaxed">
+                      <p className="text-xs text-gray-400 mt-1.5 line-clamp-4 max-w-lg leading-relaxed">
                         {randomPick.overview}
                       </p>
                     )}
