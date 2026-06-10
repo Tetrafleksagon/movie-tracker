@@ -64,6 +64,23 @@ export function Library() {
     setCurrentPage(Math.max(1, Math.min(totalPages, page)))
   }
 
+  const deleteItem = async (tmdbId: number) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { error } = await supabase
+      .from('user_media')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('tmdb_id', tmdbId)
+
+    if (error) {
+      console.error('Error deleting item:', error)
+    } else {
+      setItems(prev => prev.filter(i => i.tmdb_id !== tmdbId))
+    }
+  }
+
   const fetchLibrary = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -156,7 +173,7 @@ export function Library() {
           <div className="space-y-4">
             {paginatedItems.map((item, index) => (
               <div key={item.tmdb_id} ref={(el: HTMLDivElement | null) => { cardRefs.current[index] = el }}>
-                <MediaCard item={item} />
+                <MediaCard item={{ ...item, onDelete: () => deleteItem(item.tmdb_id) }} />
               </div>
             ))}
           </div>
