@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { MediaCard } from '../components/MediaCard'
+import { ShareModal } from '../components/ShareModal'
 
 const PAGE_SIZES = [5, 10, 15] as const
 
@@ -14,6 +15,8 @@ export function Library() {
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [currentIndex, setCurrentIndex] = useState(1)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [showShare, setShowShare] = useState(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const filters = ['all', 'planned', 'watching', 'watched', 'dropped'] as const
@@ -21,7 +24,10 @@ export function Library() {
   const totalPages = Math.ceil(filteredItems.length / pageSize)
   const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  useEffect(() => { fetchLibrary() }, [])
+  useEffect(() => {
+    fetchLibrary()
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
+  }, [])
 
   useEffect(() => {
     setFilteredItems(activeFilter === 'all' ? items : items.filter(i => i.status === activeFilter))
@@ -153,8 +159,21 @@ export function Library() {
               {currentIndex}/{paginatedItems.length}
             </span>
           )}
+          {userId && (
+            <button
+              onClick={() => setShowShare(true)}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition"
+              title="Поделиться библиотекой"
+            >
+              🔗 Поделиться
+            </button>
+          )}
         </div>
       </div>
+
+      {showShare && userId && (
+        <ShareModal userId={userId} onClose={() => setShowShare(false)} />
+      )}
 
       {/* Контент */}
       {loading ? (

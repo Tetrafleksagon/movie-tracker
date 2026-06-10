@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { Auth } from './components/Auth'
 import { Search } from './components/Search'
 import { Library } from './components/Library'
+import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
 import { supabase } from './lib/supabase'
@@ -101,7 +102,10 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <Routes>
+        <Route path="/share/:userId" element={<SharedLibrary />} />
+        <Route path="*" element={<AppContent />} />
+      </Routes>
     </BrowserRouter>
   )
 }
