@@ -35,7 +35,11 @@ export default {
     remove: "Удалить",
     loading: "Загрузка...",
     rating: "Оценка",
-    history: "История"
+    history: "История",
+    min: "мин"
+  },
+  modal: {
+    seasons: "сезонов"
   },
   auth: {
     email: "Email адрес",

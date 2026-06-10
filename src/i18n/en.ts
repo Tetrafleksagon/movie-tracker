@@ -35,7 +35,11 @@ export default {
     remove: "Remove",
     loading: "Loading...",
     rating: "Rating",
-    history: "History"
+    history: "History",
+    min: "min"
+  },
+  modal: {
+    seasons: "seasons"
   },
   auth: {
     email: "Email address",

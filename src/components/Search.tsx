@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { MovieModal } from './MovieModal'
 
 const GENRE_CONFIGS = [
   { id: 28,  key: 'genres.action' },
@@ -25,12 +26,16 @@ type CardTileProps = {
   item: any
   status: string
   onStatus: (s: string) => void
+  onClick: () => void
 }
 
-function CardTile({ item, status, onStatus }: CardTileProps) {
+function CardTile({ item, status, onStatus, onClick }: CardTileProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex-shrink-0 w-40 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col">
+    <div
+      className="flex-shrink-0 w-40 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col"
+      onClick={onClick}
+    >
       {item.poster_path ? (
         <img
           src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
@@ -55,6 +60,7 @@ function CardTile({ item, status, onStatus }: CardTileProps) {
         <select
           value={status || ''}
           onChange={e => { if (e.target.value) onStatus(e.target.value) }}
+          onClick={e => e.stopPropagation()}
           className="w-full py-1 px-1 rounded text-xs text-white font-medium cursor-pointer border-none focus:outline-none mt-auto"
           style={{ backgroundColor: getStatusColor(status) }}
         >
@@ -90,6 +96,7 @@ export function Search() {
   // Shared
   const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
   const [toast, setToast] = useState<{ message: string; error?: boolean } | null>(null)
+  const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
 
@@ -293,6 +300,16 @@ export function Search() {
         </div>
       )}
 
+      {selectedItem && (
+        <MovieModal
+          item={selectedItem}
+          status={itemStatuses[selectedItem.id] || ''}
+          lang={tmdbLang}
+          onStatus={s => addToLibrary(selectedItem, s)}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
+
       {/* Search bar */}
       <form onSubmit={handleSearch} className="mb-8">
         <div ref={searchWrapperRef} className="relative">
@@ -366,7 +383,7 @@ export function Search() {
           {results.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {results.map(item => (
-                <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition">
+                <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition cursor-pointer" onClick={() => setSelectedItem(item)}>
                   {item.poster_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
@@ -387,6 +404,7 @@ export function Search() {
                         if (!s) return
                         addToLibrary(item, s)
                       }}
+                      onClick={e => e.stopPropagation()}
                       className="w-full py-1.5 px-2 rounded text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
                       style={{ backgroundColor: getStatusColor(itemStatuses[item.id] || '') }}
                     >
@@ -441,7 +459,11 @@ export function Search() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4">
+                <div
+                  className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 cursor-pointer"
+                  onClick={() => setSelectedItem(randomPick)}
+                  title={t('search.random_label')}
+                >
                   <div className="min-w-0">
                     <p className="text-xs text-indigo-300 font-semibold mb-1">🎲 {t('search.random_label')}</p>
                     <h3 className="text-xl font-bold text-white leading-tight">
@@ -460,6 +482,7 @@ export function Search() {
                   <select
                     value={itemStatuses[randomPick.id] || ''}
                     onChange={e => { if (e.target.value) addToLibrary(randomPick, e.target.value) }}
+                    onClick={e => e.stopPropagation()}
                     className="flex-shrink-0 py-2 px-3 rounded-lg text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
                     style={{ backgroundColor: getStatusColor(itemStatuses[randomPick.id] || '') }}
                   >
@@ -491,6 +514,7 @@ export function Search() {
                     item={item}
                     status={itemStatuses[item.id] || ''}
                     onStatus={s => addToLibrary(item, s)}
+                    onClick={() => setSelectedItem(item)}
                   />
                 ))}
               </div>
@@ -508,6 +532,7 @@ export function Search() {
                     item={item}
                     status={itemStatuses[item.id] || ''}
                     onStatus={s => addToLibrary(item, s)}
+                    onClick={() => setSelectedItem(item)}
                   />
                 ))}
               </div>
