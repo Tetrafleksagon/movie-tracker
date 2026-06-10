@@ -1,5 +1,6 @@
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY
-const BASE_URL = 'https://api.themoviedb.org/3'
+// All JSON calls go through our own /api/tmdb proxy (Cloudflare Function in
+// prod, Vite dev-proxy locally) so the TMDB key stays server-side.
+const BASE_URL = '/api/tmdb'
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
 
 export function getPosterUrl(path: string | null): string {
@@ -13,7 +14,6 @@ export async function searchMedia(query: string, page = 1) {
     include_adult: 'false',
     language: 'ru-RU',
     page: String(page),
-    api_key: API_KEY
   })
   const response = await fetch(`${BASE_URL}/search/multi?${params.toString()}`)
   if (!response.ok) throw new Error('TMDB API error')
@@ -72,7 +72,7 @@ export async function localizeMediaItems(items: any[], lang: string): Promise<an
       }
 
       try {
-        const res = await fetch(`${BASE_URL}/${type}/${tmdbId}?api_key=${API_KEY}&language=${lang}`)
+        const res = await fetch(`${BASE_URL}/${type}/${tmdbId}?language=${lang}`)
         if (!res.ok) return item
         const data = await res.json()
         const meta: LocalizedMeta = {

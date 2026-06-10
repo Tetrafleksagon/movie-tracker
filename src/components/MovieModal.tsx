@@ -12,7 +12,6 @@ type Props = {
 
 export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   const { t } = useTranslation()
-  const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
   const langShort = lang.startsWith('ru') ? 'ru' : 'en'
   const [details, setDetails] = useState<any>(null)
   const [playTrailer, setPlayTrailer] = useState(false)
@@ -24,7 +23,7 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
     const type = item.media_type === 'tv' ? 'tv' : 'movie'
     // One request pulls details + trailers + cast.
     fetch(
-      `https://api.themoviedb.org/3/${type}/${item.id}?api_key=${TMDB_KEY}&language=${lang}` +
+      `/api/tmdb/${type}/${item.id}?language=${lang}` +
       `&append_to_response=videos,credits&include_video_language=${langShort},en`
     )
       .then(r => r.json())
