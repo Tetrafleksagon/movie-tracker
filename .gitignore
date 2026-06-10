@@ -5,3 +5,10 @@ dist
 .DS_Store
 *.log
 .vscode
+
+# IDE / tool-specific local config
+settings.json
+cline_mcp_settings.json
+
+# MCP agent memory data
+data/
