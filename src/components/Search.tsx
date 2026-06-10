@@ -62,8 +62,9 @@ export function Search() {
   }
 
   const selectSuggestion = (item: any) => {
-    setQuery(item.title || item.name)
-    setResults(suggestions)
+    const title = item.title || item.name
+    setQuery(title)
+    setResults(suggestions.filter(s => (s.title || s.name) === title))
     setShowSuggestions(false)
     setSuggestions([])
     setItemStatuses({})
