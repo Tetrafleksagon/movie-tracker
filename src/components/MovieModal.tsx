@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-
-function getStatusColor(s: string) {
-  if (s === 'watched') return '#16a34a'
-  if (s === 'watching') return '#2563eb'
-  if (s === 'dropped') return '#dc2626'
-  if (s === 'planned') return '#4b5563'
-  return '#374151'
-}
+import { StatusSelect } from './StatusSelect'
 
 type Props = {
   item: any
@@ -29,10 +22,10 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
     setPlayTrailer(false)
 
     const type = item.media_type === 'tv' ? 'tv' : 'movie'
-    // One request pulls details + trailers + cast + watch providers.
+    // One request pulls details + trailers + cast.
     fetch(
       `https://api.themoviedb.org/3/${type}/${item.id}?api_key=${TMDB_KEY}&language=${lang}` +
-      `&append_to_response=videos,credits,watch/providers&include_video_language=${langShort},en`
+      `&append_to_response=videos,credits&include_video_language=${langShort},en`
     )
       .then(r => r.json())
       .then(setDetails)
@@ -81,14 +74,6 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
 
   // Cast: top billed.
   const cast: any[] = (details?.credits?.cast || []).slice(0, 12)
-
-  // Watch providers (JustWatch via TMDB), region by UI language.
-  const region = lang.startsWith('ru') ? 'RU' : 'US'
-  const providerRegions = details?.['watch/providers']?.results || {}
-  const providerInfo = providerRegions[region] || providerRegions['US'] || null
-  const providerList: any[] = providerInfo
-    ? (providerInfo.flatrate || providerInfo.rent || providerInfo.buy || [])
-    : []
 
   return (
     <div
@@ -216,35 +201,6 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
               </div>
             ) : null}
 
-            {/* Where to watch */}
-            {providerList.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 mb-2">{t('modal.watch_providers')}</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  {providerList.map((p: any) => (
-                    <img
-                      key={p.provider_id}
-                      src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                      alt={p.provider_name}
-                      title={p.provider_name}
-                      className="w-9 h-9 rounded-lg object-cover"
-                      loading="lazy"
-                    />
-                  ))}
-                  {providerInfo?.link && (
-                    <a
-                      href={providerInfo.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-400 hover:text-blue-300 ml-1"
-                    >
-                      JustWatch →
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Cast */}
             {cast.length > 0 && (
               <div>
@@ -275,18 +231,11 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
             )}
 
             {/* Add to library */}
-            <select
-              value={status || ''}
-              onChange={e => { if (e.target.value) onStatus(e.target.value) }}
+            <StatusSelect
+              value={status}
+              onStatus={onStatus}
               className="w-full py-2.5 px-3 rounded-lg text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
-              style={{ backgroundColor: getStatusColor(status) }}
-            >
-              <option value="" disabled>+ {t('common.add')}</option>
-              <option value="planned">📋 {t('status.planned')}</option>
-              <option value="watching">👀 {t('status.watching')}</option>
-              <option value="watched">✅ {t('status.watched')}</option>
-              <option value="dropped">❌ {t('status.dropped')}</option>
-            </select>
+            />
 
           </div>
         </div>

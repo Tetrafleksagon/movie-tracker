@@ -3,13 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
+import { RATING_COLORS, getStatusColor } from '../lib/status'
 import { MovieModal } from './MovieModal'
-
-const RATING_COLORS: Record<number, string> = {
-  1: '#7f1d1d', 2: '#991b1b', 3: '#b91c1c',
-  4: '#92400e', 5: '#b45309', 6: '#d97706',
-  7: '#166534', 8: '#15803d', 9: '#16a34a', 10: '#22c55e',
-}
 
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
@@ -48,13 +43,6 @@ export function SharedLibrary() {
       })))
     }
     setLoading(false)
-  }
-
-  const getStatusColor = (s: string) => {
-    if (s === 'watched') return '#16a34a'
-    if (s === 'watching') return '#2563eb'
-    if (s === 'dropped') return '#dc2626'
-    return '#4b5563'
   }
 
   return (

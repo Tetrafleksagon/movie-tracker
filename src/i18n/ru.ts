@@ -42,7 +42,6 @@ export default {
   modal: {
     seasons: "сезонов",
     trailer: "Трейлер",
-    watch_providers: "Где смотреть",
     cast: "В ролях"
   },
   auth: {

@@ -42,7 +42,6 @@ export default {
   modal: {
     seasons: "seasons",
     trailer: "Trailer",
-    watch_providers: "Where to watch",
     cast: "Cast"
   },
   auth: {

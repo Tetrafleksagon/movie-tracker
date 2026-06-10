@@ -3,14 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
-
-type StatusHistory = { status: string; time: string }[]
-
-const RATING_COLORS: Record<number, string> = {
-  1: '#7f1d1d', 2: '#991b1b', 3: '#b91c1c',
-  4: '#92400e', 5: '#b45309', 6: '#d97706',
-  7: '#166534', 8: '#15803d', 9: '#16a34a', 10: '#22c55e',
-}
+import { StatusSelect } from './StatusSelect'
+import { RATING_COLORS, getStatusIcon, type StatusHistory } from '../lib/status'
 
 export function MediaCard({ item }: { item: any }) {
   const { t, i18n } = useTranslation()
@@ -74,14 +68,6 @@ export function MediaCard({ item }: { item: any }) {
     else setUserRating(newRating)
   }
 
-  const getColor = (s: string) => {
-    if (!s) return '#374151'
-    if (s === 'watched') return '#16a34a'
-    if (s === 'watching') return '#2563eb'
-    if (s === 'dropped') return '#dc2626'
-    return '#4b5563'
-  }
-
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
@@ -98,7 +84,6 @@ export function MediaCard({ item }: { item: any }) {
 
   const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
   const getTypeLabel = () => t(mediaType === 'tv' ? 'media.tv_show' : 'media.movie')
-  const getStatusIcon = (s: string) => ({ planned: '📋', watching: '👀', watched: '✅', dropped: '❌' }[s] || '')
   const getStatusLabel = (s: string) => t(`status.${s}`) || s
 
   const activeRating = hoverRating ?? userRating ?? 0
@@ -136,19 +121,14 @@ export function MediaCard({ item }: { item: any }) {
           </p>
         </div>
 
-        <select
+        <StatusSelect
           value={status || ''}
-          onChange={(e) => addToLibrary(e.target.value)}
+          onStatus={addToLibrary}
           disabled={loading}
+          placeholder={`— ${t('status.select')} —`}
           className="w-full sm:w-auto rounded-md text-sm text-white font-medium py-1.5 px-2.5 border-none cursor-pointer"
-          style={{ backgroundColor: status ? getColor(status) : '#374151', opacity: loading ? 0.7 : 1 }}
-        >
-          <option value="" disabled>— {t('status.select')} —</option>
-          <option value="planned">📋 {t('status.planned')}</option>
-          <option value="watching">👀 {t('status.watching')}</option>
-          <option value="watched">✅ {t('status.watched')}</option>
-          <option value="dropped">❌ {t('status.dropped')}</option>
-        </select>
+          style={{ opacity: loading ? 0.7 : 1 }}
+        />
 
         {/* Личный рейтинг */}
         <div className="flex items-center gap-1.5 flex-wrap">

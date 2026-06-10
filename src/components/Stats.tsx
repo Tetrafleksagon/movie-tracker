@@ -3,19 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
-
-const STATUS_META = [
-  { key: 'planned', color: '#4b5563' },
-  { key: 'watching', color: '#2563eb' },
-  { key: 'watched', color: '#16a34a' },
-  { key: 'dropped', color: '#dc2626' },
-] as const
-
-const RATING_COLORS: Record<number, string> = {
-  1: '#7f1d1d', 2: '#991b1b', 3: '#b91c1c',
-  4: '#92400e', 5: '#b45309', 6: '#d97706',
-  7: '#166534', 8: '#15803d', 9: '#16a34a', 10: '#22c55e',
-}
+import { STATUS_OPTIONS, getStatusColor, RATING_COLORS } from '../lib/status'
 
 type Row = {
   status: string
@@ -170,13 +158,13 @@ export function Stats() {
       {/* Status breakdown */}
       <Section title={t('stats.by_status')}>
         <div className="space-y-2.5">
-          {STATUS_META.map(s => (
+          {STATUS_OPTIONS.map(s => (
             <Bar
-              key={s.key}
-              label={t(`status.${s.key}`)}
-              value={stats.byStatus[s.key]}
+              key={s.value}
+              label={t(`status.${s.value}`)}
+              value={stats.byStatus[s.value]}
               max={maxStatus}
-              color={s.color}
+              color={getStatusColor(s.value)}
             />
           ))}
         </div>

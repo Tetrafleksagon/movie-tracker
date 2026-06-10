@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
+import { StatusSelect } from './StatusSelect'
 
 const GENRE_CONFIGS = [
   { id: 28,  key: 'genres.action' },
@@ -13,14 +14,6 @@ const GENRE_CONFIGS = [
 ]
 
 type GenreRow = { id: number; key: string; movies: any[] }
-
-function getStatusColor(s: string) {
-  if (s === 'watched') return '#16a34a'
-  if (s === 'watching') return '#2563eb'
-  if (s === 'dropped') return '#dc2626'
-  if (s === 'planned') return '#4b5563'
-  return '#374151'
-}
 
 function ScrollRow({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -86,7 +79,6 @@ type CardTileProps = {
 }
 
 function CardTile({ item, status, onStatus, onClick }: CardTileProps) {
-  const { t } = useTranslation()
   return (
     <div
       className="flex-shrink-0 w-40 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col"
@@ -113,19 +105,11 @@ function CardTile({ item, status, onStatus, onClick }: CardTileProps) {
             {item.overview}
           </p>
         )}
-        <select
-          value={status || ''}
-          onChange={e => { if (e.target.value) onStatus(e.target.value) }}
-          onClick={e => e.stopPropagation()}
+        <StatusSelect
+          value={status}
+          onStatus={onStatus}
           className="w-full py-1 px-1 rounded text-xs text-white font-medium cursor-pointer border-none focus:outline-none mt-auto"
-          style={{ backgroundColor: getStatusColor(status) }}
-        >
-          <option value="" disabled>+ {t('common.add')}</option>
-          <option value="planned">📋 {t('status.planned')}</option>
-          <option value="watching">👀 {t('status.watching')}</option>
-          <option value="watched">✅ {t('status.watched')}</option>
-          <option value="dropped">❌ {t('status.dropped')}</option>
-        </select>
+        />
       </div>
     </div>
   )
@@ -453,23 +437,11 @@ export function Search() {
                   )}
                   <div className="p-3">
                     <h3 className="font-semibold text-sm mb-2 truncate">{item.title || item.name}</h3>
-                    <select
+                    <StatusSelect
                       value={itemStatuses[item.id] || ''}
-                      onChange={e => {
-                        const s = e.target.value
-                        if (!s) return
-                        addToLibrary(item, s)
-                      }}
-                      onClick={e => e.stopPropagation()}
+                      onStatus={s => addToLibrary(item, s)}
                       className="w-full py-1.5 px-2 rounded text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
-                      style={{ backgroundColor: getStatusColor(itemStatuses[item.id] || '') }}
-                    >
-                      <option value="" disabled>+ {t('common.add')}</option>
-                      <option value="planned">📋 {t('status.planned')}</option>
-                      <option value="watching">👀 {t('status.watching')}</option>
-                      <option value="watched">✅ {t('status.watched')}</option>
-                      <option value="dropped">❌ {t('status.dropped')}</option>
-                    </select>
+                    />
                   </div>
                 </div>
               ))}
@@ -535,19 +507,11 @@ export function Search() {
                       </p>
                     )}
                   </div>
-                  <select
+                  <StatusSelect
                     value={itemStatuses[randomPick.id] || ''}
-                    onChange={e => { if (e.target.value) addToLibrary(randomPick, e.target.value) }}
-                    onClick={e => e.stopPropagation()}
+                    onStatus={s => addToLibrary(randomPick, s)}
                     className="flex-shrink-0 py-2 px-3 rounded-lg text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
-                    style={{ backgroundColor: getStatusColor(itemStatuses[randomPick.id] || '') }}
-                  >
-                    <option value="" disabled>+ {t('common.add')}</option>
-                    <option value="planned">📋 {t('status.planned')}</option>
-                    <option value="watching">👀 {t('status.watching')}</option>
-                    <option value="watched">✅ {t('status.watched')}</option>
-                    <option value="dropped">❌ {t('status.dropped')}</option>
-                  </select>
+                  />
                 </div>
               </div>
             ) : !homeLoading && (
