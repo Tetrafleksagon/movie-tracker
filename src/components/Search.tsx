@@ -30,20 +30,33 @@ export function Search() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { error } = await supabase
-      .from('user_media')
-      .insert({
-        user_id: user.id,
-        media_id: item.id,
-        media_type: item.media_type,
-        title: item.title || item.name,
-        status: 'planned'
-      })
+    const title = item.title || item.name
+    const now = new Date().toISOString()
+
+    const { error: cacheError } = await supabase.from('media_cache').upsert({
+      tmdb_id: item.id,
+      media_type: item.media_type,
+      title,
+      poster_path: item.poster_path,
+      vote_average: item.vote_average || 0,
+      release_date: item.release_date || item.first_air_date,
+    }, { onConflict: 'tmdb_id' })
+
+    if (cacheError) console.error('Cache error:', cacheError)
+
+    const { error } = await supabase.from('user_media').upsert({
+      user_id: user.id,
+      tmdb_id: item.id,
+      status: 'planned',
+      updated_at: now,
+      status_history: [{ status: 'planned', time: now }],
+    }, { onConflict: 'user_id,tmdb_id' })
 
     if (error) {
+      console.error('Error adding to library:', error)
       alert('Error adding to library')
     } else {
-      alert('Added to library!')
+      alert(t('common.add'))
     }
   }
 
@@ -65,7 +78,7 @@ export function Search() {
             disabled={loading}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded font-medium transition"
           >
-            {loading ? t('general.loading') : t('header.search')}
+            {loading ? t('common.loading') : t('header.search')}
           </button>
         </div>
       </form>
@@ -92,7 +105,7 @@ export function Search() {
                 onClick={() => addToLibrary(item)}
                 className="w-full py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition"
               >
-                + {t('general.add')}
+                + {t('common.add')}
               </button>
             </div>
           </div>
