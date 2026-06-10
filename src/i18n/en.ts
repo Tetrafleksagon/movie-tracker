@@ -63,5 +63,22 @@ export default {
     empty: "Your library is empty",
     no_matches: "No items match this filter",
     start_searching: "Search for movies and add them to your library"
+  },
+  share: {
+    button: "Share",
+    title: "Share Library",
+    description: "Copy the link or share on social networks",
+    copy: "📋 Copy",
+    copied: "✓ Copied!",
+    close: "Close",
+    share: "✈️ Share"
+  },
+  public_library: {
+    title: "Public Library",
+    loading: "Loading...",
+    error: "Failed to load library",
+    empty: "Library is empty",
+    items: "items",
+    open_app: "Open App →"
   }
 } as const

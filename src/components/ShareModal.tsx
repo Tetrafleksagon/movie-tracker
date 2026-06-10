@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   userId: string
@@ -6,6 +7,7 @@ type Props = {
 }
 
 export function ShareModal({ userId, onClose }: Props) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const shareUrl = `${window.location.origin}/share/${userId}`
 
@@ -17,7 +19,7 @@ export function ShareModal({ userId, onClose }: Props) {
 
   const shareNative = async () => {
     if (navigator.share) {
-      await navigator.share({ title: 'Моя библиотека фильмов — Movie Tracker', url: shareUrl })
+      await navigator.share({ title: t('share.title'), url: shareUrl })
     } else {
       copyLink()
     }
@@ -32,10 +34,8 @@ export function ShareModal({ userId, onClose }: Props) {
         className="bg-gray-800 rounded-xl p-6 w-full max-w-md border border-gray-700 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-white text-center mb-1">Поделиться библиотекой</h2>
-        <p className="text-sm text-gray-400 text-center mb-4">
-          Скопируй ссылку или поделись в соцсетях
-        </p>
+        <h2 className="text-lg font-bold text-white text-center mb-1">{t('share.title')}</h2>
+        <p className="text-sm text-gray-400 text-center mb-4">{t('share.description')}</p>
 
         <div className="bg-gray-700/60 border border-gray-600 rounded-lg px-3 py-2.5 text-sm text-gray-200 mb-4 break-all select-all cursor-text">
           {shareUrl}
@@ -45,18 +45,16 @@ export function ShareModal({ userId, onClose }: Props) {
           <button
             onClick={copyLink}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
-              copied
-                ? 'bg-green-600 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
+              copied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
           >
-            {copied ? '✓ Скопировано!' : '📋 Копировать'}
+            {copied ? t('share.copied') : t('share.copy')}
           </button>
           <button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 text-gray-200 transition"
           >
-            Закрыть
+            {t('share.close')}
           </button>
         </div>
 
@@ -64,7 +62,7 @@ export function ShareModal({ userId, onClose }: Props) {
           onClick={shareNative}
           className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition"
         >
-          ✈️ Поделиться
+          {t('share.share')}
         </button>
       </div>
     </div>

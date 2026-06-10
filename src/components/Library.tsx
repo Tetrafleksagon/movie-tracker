@@ -163,9 +163,9 @@ export function Library() {
             <button
               onClick={() => setShowShare(true)}
               className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition"
-              title="Поделиться библиотекой"
+              title={t('share.title')}
             >
-              🔗 Поделиться
+              🔗 {t('share.button')}
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
 
@@ -9,22 +10,9 @@ const RATING_COLORS: Record<number, string> = {
   7: '#166534', 8: '#15803d', 9: '#16a34a', 10: '#22c55e',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  planned: '📋 В планах',
-  watching: '👀 Смотрю',
-  watched: '✅ Просмотрено',
-  dropped: '❌ Бросил',
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  planned: '#4b5563',
-  watching: '#2563eb',
-  watched: '#16a34a',
-  dropped: '#dc2626',
-}
-
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
+  const { t } = useTranslation()
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -49,7 +37,7 @@ export function SharedLibrary() {
     } else {
       setItems((data || []).map(item => ({
         ...item,
-        title: item.media_cache?.title || 'Без названия',
+        title: item.media_cache?.title || t('common.no_title'),
         poster_path: item.media_cache?.poster_path,
         vote_average: item.media_cache?.vote_average,
         media_type: item.media_cache?.media_type || 'movie',
@@ -57,6 +45,13 @@ export function SharedLibrary() {
       })))
     }
     setLoading(false)
+  }
+
+  const getStatusColor = (s: string) => {
+    if (s === 'watched') return '#16a34a'
+    if (s === 'watching') return '#2563eb'
+    if (s === 'dropped') return '#dc2626'
+    return '#4b5563'
   }
 
   return (
@@ -75,46 +70,37 @@ export function SharedLibrary() {
           >
             🎬 Movie Tracker
           </a>
-          <Link
-            to="/"
-            className="text-sm text-blue-400 hover:text-blue-300 transition"
-          >
-            Открыть приложение →
+          <Link to="/" className="text-sm text-blue-400 hover:text-blue-300 transition">
+            {t('public_library.open_app')}
           </Link>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-200">Публичная библиотека</h2>
+          <h2 className="text-xl font-bold text-gray-200">{t('public_library.title')}</h2>
           {!loading && !notFound && (
-            <span className="text-sm text-gray-500">{items.length} записей</span>
+            <span className="text-sm text-gray-500">{items.length} {t('public_library.items')}</span>
           )}
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-400 py-16">Загрузка...</p>
+          <p className="text-center text-gray-400 py-16">{t('public_library.loading')}</p>
         ) : notFound ? (
-          <p className="text-center text-red-400 py-16">Не удалось загрузить библиотеку</p>
+          <p className="text-center text-red-400 py-16">{t('public_library.error')}</p>
         ) : items.length === 0 ? (
-          <p className="text-center text-gray-400 py-16">Библиотека пуста</p>
+          <p className="text-center text-gray-400 py-16">{t('public_library.empty')}</p>
         ) : (
           <div className="space-y-4">
             {items.map(item => {
               const year = (item.release_date || '').split('-')[0] || '—'
               const tmdbRating = item.vote_average ? item.vote_average.toFixed(1) : null
-              const typeLabel = item.media_type === 'tv' ? '📺 Сериал' : '🎬 Фильм'
+              const typeLabel = item.media_type === 'tv' ? `📺 ${t('media.tv_show')}` : `🎬 ${t('media.movie')}`
 
               return (
-                <div
-                  key={item.tmdb_id}
-                  className="flex gap-4 bg-gray-800 p-4 rounded-xl border border-gray-700"
-                >
+                <div key={item.tmdb_id} className="flex gap-4 bg-gray-800 p-4 rounded-xl border border-gray-700">
                   {/* Постер */}
-                  <div
-                    className="relative rounded-lg overflow-hidden flex-shrink-0 w-20 sm:w-28"
-                    style={{ aspectRatio: '2/3' }}
-                  >
+                  <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-20 sm:w-28" style={{ aspectRatio: '2/3' }}>
                     <img
                       src={getPosterUrl(item.poster_path)}
                       className="absolute inset-0 w-full h-full object-cover"
@@ -140,9 +126,9 @@ export function SharedLibrary() {
 
                     <span
                       className="text-xs font-semibold px-2.5 py-1 rounded-md w-fit"
-                      style={{ backgroundColor: STATUS_COLORS[item.status] || '#4b5563', color: '#fff' }}
+                      style={{ backgroundColor: getStatusColor(item.status), color: '#fff' }}
                     >
-                      {STATUS_LABELS[item.status] || item.status}
+                      {t(`status.${item.status}`) || item.status}
                     </span>
 
                     {item.user_rating && (
