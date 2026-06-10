@@ -80,6 +80,7 @@ export function Search() {
   const [trending, setTrending] = useState<any[]>([])
   const [genres, setGenres] = useState<GenreRow[]>([])
   const [randomPick, setRandomPick] = useState<any | null>(null)
+  const [randomLoading, setRandomLoading] = useState(false)
 
   // Shared
   const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
@@ -138,11 +139,24 @@ export function Search() {
     setHomeLoading(false)
   }
 
-  const pickRandom = () => {
-    if (!trending.length) return
-    const pool = trending.filter(i => !randomPick || i.id !== randomPick.id)
-    const item = pool[Math.floor(Math.random() * pool.length)]
-    setRandomPick(item || trending[0])
+  const pickRandom = async () => {
+    setRandomLoading(true)
+    try {
+      const page = Math.floor(Math.random() * 150) + 1
+      const res = await fetch(
+        `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
+      )
+      const data = await res.json()
+      const pool = (data.results || []).filter(
+        (m: any) => m.poster_path && m.backdrop_path && m.id !== randomPick?.id
+      )
+      if (pool.length > 0) {
+        setRandomPick(pool[Math.floor(Math.random() * pool.length)])
+      }
+    } catch (e) {
+      console.error('Random pick error:', e)
+    }
+    setRandomLoading(false)
   }
 
   const showToast = useCallback((message: string, error = false) => {
@@ -395,10 +409,10 @@ export function Search() {
               <h2 className="text-lg font-bold text-gray-100">{t('search.random_title')}</h2>
               <button
                 onClick={pickRandom}
-                disabled={homeLoading || !trending.length}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:text-gray-500 rounded-lg text-sm font-semibold transition"
+                disabled={randomLoading}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:opacity-60 rounded-lg text-sm font-semibold transition min-w-[120px] text-center"
               >
-                {t('search.random_btn')}
+                {randomLoading ? '...' : t('search.random_btn')}
               </button>
             </div>
 
