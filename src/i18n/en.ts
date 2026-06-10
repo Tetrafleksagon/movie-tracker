@@ -57,7 +57,20 @@ export default {
     forward: "Next",
     start_typing: "Start typing to search",
     no_results: "No results found",
-    error: "Search failed. Please try again."
+    error: "Search failed. Please try again.",
+    trending: "Trending This Week",
+    random_title: "Random Movie",
+    random_btn: "🎲 Pick Random",
+    random_label: "Random Pick",
+    random_hint: "Click the button to get a random movie suggestion"
+  },
+  genres: {
+    action: "Action",
+    comedy: "Comedy",
+    drama: "Drama",
+    horror: "Horror",
+    scifi: "Sci-Fi",
+    animation: "Animation"
   },
   library: {
     empty: "Your library is empty",

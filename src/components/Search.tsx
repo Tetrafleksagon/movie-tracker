@@ -1,12 +1,86 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
+const GENRE_CONFIGS = [
+  { id: 28,  key: 'genres.action' },
+  { id: 35,  key: 'genres.comedy' },
+  { id: 18,  key: 'genres.drama' },
+  { id: 27,  key: 'genres.horror' },
+  { id: 878, key: 'genres.scifi' },
+  { id: 16,  key: 'genres.animation' },
+]
+
+type GenreRow = { id: number; key: string; movies: any[] }
+
+function getStatusColor(s: string) {
+  if (s === 'watched') return '#16a34a'
+  if (s === 'watching') return '#2563eb'
+  if (s === 'dropped') return '#dc2626'
+  if (s === 'planned') return '#4b5563'
+  return '#374151'
+}
+
+type CardTileProps = {
+  item: any
+  status: string
+  onStatus: (s: string) => void
+}
+
+function CardTile({ item, status, onStatus }: CardTileProps) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex-shrink-0 w-32 bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all cursor-pointer">
+      {item.poster_path ? (
+        <img
+          src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+          alt={item.title || item.name}
+          className="w-full h-44 object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-44 bg-gray-700 flex items-center justify-center">
+          <span className="text-gray-500 text-xs text-center px-1">{item.title || item.name}</span>
+        </div>
+      )}
+      <div className="p-2">
+        <h3 className="text-xs font-semibold mb-1.5 leading-tight line-clamp-2" style={{ minHeight: '2.25rem' }}>
+          {item.title || item.name}
+        </h3>
+        <select
+          value={status || ''}
+          onChange={e => { if (e.target.value) onStatus(e.target.value) }}
+          className="w-full py-1 px-1 rounded text-xs text-white font-medium cursor-pointer border-none focus:outline-none"
+          style={{ backgroundColor: getStatusColor(status) }}
+        >
+          <option value="" disabled>+ {t('common.add')}</option>
+          <option value="planned">📋 {t('status.planned')}</option>
+          <option value="watching">👀 {t('status.watching')}</option>
+          <option value="watched">✅ {t('status.watched')}</option>
+          <option value="dropped">❌ {t('status.dropped')}</option>
+        </select>
+      </div>
+    </div>
+  )
+}
+
 export function Search() {
   const { t } = useTranslation()
+  const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
+
+  // Search state
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [isSearchMode, setIsSearchMode] = useState(false)
+
+  // Home state
+  const [homeLoading, setHomeLoading] = useState(true)
+  const [trending, setTrending] = useState<any[]>([])
+  const [genres, setGenres] = useState<GenreRow[]>([])
+  const [randomPick, setRandomPick] = useState<any | null>(null)
+
+  // Shared
   const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
   const [toast, setToast] = useState<{ message: string; error?: boolean } | null>(null)
   const [suggestions, setSuggestions] = useState<any[]>([])
@@ -16,10 +90,9 @@ export function Search() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchWrapperRef = useRef<HTMLDivElement>(null)
 
-  const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
-
-  // Закрывать подсказки при клике вне поля
   useEffect(() => {
+    fetchHomeData()
+
     const handleClickOutside = (e: MouseEvent) => {
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false)
@@ -29,11 +102,84 @@ export function Search() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const showToast = (message: string, error = false) => {
+  const fetchHomeData = async () => {
+    try {
+      const [trendingRes, ...genreResponses] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}`),
+        ...GENRE_CONFIGS.map(g =>
+          fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1`)
+        ),
+      ])
+
+      const trendingData = await trendingRes.json()
+      const genreData = await Promise.all(genreResponses.map(r => r.json()))
+
+      setTrending(
+        (trendingData.results || [])
+          .filter((i: any) => i.media_type !== 'person')
+          .slice(0, 14)
+      )
+      setGenres(
+        GENRE_CONFIGS.map((g, i) => ({
+          ...g,
+          movies: (genreData[i].results || []).slice(0, 10),
+        }))
+      )
+    } catch (e) {
+      console.error('Home data fetch error:', e)
+    }
+    setHomeLoading(false)
+  }
+
+  const pickRandom = () => {
+    if (!trending.length) return
+    const pool = trending.filter(i => !randomPick || i.id !== randomPick.id)
+    const item = pool[Math.floor(Math.random() * pool.length)]
+    setRandomPick(item || trending[0])
+  }
+
+  const showToast = useCallback((message: string, error = false) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ message, error })
     toastTimer.current = setTimeout(() => setToast(null), 2000)
-  }
+  }, [])
+
+  const addToLibrary = useCallback(async (item: any, status: string) => {
+    setItemStatuses(prev => ({ ...prev, [item.id]: status }))
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const title = item.title || item.name
+    const now = new Date().toISOString()
+
+    const { error: cacheError } = await supabase.from('media_cache').upsert({
+      tmdb_id: item.id,
+      media_type: item.media_type || 'movie',
+      title,
+      poster_path: item.poster_path,
+      vote_average: item.vote_average || 0,
+      release_date: item.release_date || item.first_air_date,
+    }, { onConflict: 'tmdb_id' })
+
+    if (cacheError) console.error('Cache error:', cacheError)
+
+    const { error } = await supabase.from('user_media').upsert({
+      user_id: user.id,
+      tmdb_id: item.id,
+      status,
+      updated_at: now,
+      status_history: [{ status, time: now }],
+    }, { onConflict: 'user_id,tmdb_id' })
+
+    if (error) {
+      console.error('Error adding to library:', error)
+      showToast(t('common.error'), true)
+      setItemStatuses(prev => { const next = { ...prev }; delete next[item.id]; return next })
+    } else {
+      showToast('✓ ' + title)
+    }
+  }, [showToast, t])
 
   const fetchSuggestions = async (q: string) => {
     try {
@@ -41,9 +187,7 @@ export function Search() {
         `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
       )
       const data = await res.json()
-      const items = (data.results || [])
-        .filter((i: any) => i.media_type !== 'person')
-        .slice(0, 7)
+      const items = (data.results || []).filter((i: any) => i.media_type !== 'person').slice(0, 7)
       setSuggestions(items)
       setShowSuggestions(items.length > 0)
     } catch {}
@@ -65,6 +209,7 @@ export function Search() {
     const title = item.title || item.name
     setQuery(title)
     setResults(suggestions.filter(s => (s.title || s.name) === title))
+    setIsSearchMode(true)
     setShowSuggestions(false)
     setSuggestions([])
     setItemStatuses({})
@@ -72,10 +217,15 @@ export function Search() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!query.trim()) return
+    if (!query.trim()) {
+      setIsSearchMode(false)
+      setResults([])
+      return
+    }
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     setShowSuggestions(false)
     setLoading(true)
+    setIsSearchMode(true)
     setItemStatuses({})
     try {
       const res = await fetch(
@@ -90,47 +240,13 @@ export function Search() {
     }
   }
 
-  const addToLibrary = async (item: any, status: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const title = item.title || item.name
-    const now = new Date().toISOString()
-
-    const { error: cacheError } = await supabase.from('media_cache').upsert({
-      tmdb_id: item.id,
-      media_type: item.media_type,
-      title,
-      poster_path: item.poster_path,
-      vote_average: item.vote_average || 0,
-      release_date: item.release_date || item.first_air_date,
-    }, { onConflict: 'tmdb_id' })
-
-    if (cacheError) console.error('Cache error:', cacheError)
-
-    const { error } = await supabase.from('user_media').upsert({
-      user_id: user.id,
-      tmdb_id: item.id,
-      status,
-      updated_at: now,
-      status_history: [{ status, time: now }],
-    }, { onConflict: 'user_id,tmdb_id' })
-
-    if (error) {
-      console.error('Error adding to library:', error)
-      showToast('Error adding to library', true)
-      setItemStatuses(prev => { const next = { ...prev }; delete next[item.id]; return next })
-    } else {
-      showToast('✓ ' + title)
-    }
-  }
-
-  const getStatusColor = (s: string) => {
-    if (s === 'watched') return '#16a34a'
-    if (s === 'watching') return '#2563eb'
-    if (s === 'dropped') return '#dc2626'
-    if (s === 'planned') return '#4b5563'
-    return '#374151'
+  const clearSearch = () => {
+    setQuery('')
+    setResults([])
+    setIsSearchMode(false)
+    setSuggestions([])
+    setShowSuggestions(false)
+    setItemStatuses({})
   }
 
   return (
@@ -147,20 +263,31 @@ export function Search() {
         </div>
       )}
 
-      <h2 className="text-2xl font-bold mb-6">{t('header.search')}</h2>
-
+      {/* Search bar */}
       <form onSubmit={handleSearch} className="mb-8">
         <div ref={searchWrapperRef} className="relative">
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder={t('search.placeholder')}
-              value={query}
-              onChange={handleInputChange}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="flex-1 p-3 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoComplete="off"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder={t('search.placeholder')}
+                value={query}
+                onChange={handleInputChange}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                className="w-full p-3 pr-9 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="off"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
+                  tabIndex={-1}
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <button
               type="submit"
               disabled={loading}
@@ -170,7 +297,7 @@ export function Search() {
             </button>
           </div>
 
-          {/* Подсказки */}
+          {/* Autocomplete suggestions */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 overflow-hidden">
               {suggestions.map(item => {
@@ -178,11 +305,10 @@ export function Search() {
                 const originalTitle = item.original_title || item.original_name
                 const year = (item.release_date || item.first_air_date || '').split('-')[0]
                 const rating = item.vote_average > 0 ? item.vote_average.toFixed(2) : null
-
                 return (
                   <div
                     key={item.id}
-                    onMouseDown={(e) => { e.preventDefault(); selectSuggestion(item) }}
+                    onMouseDown={e => { e.preventDefault(); selectSuggestion(item) }}
                     className="flex items-center justify-between px-4 py-3 hover:bg-gray-700 cursor-pointer border-b border-gray-700/50 last:border-0"
                   >
                     <div className="min-w-0">
@@ -194,9 +320,7 @@ export function Search() {
                       </p>
                     </div>
                     {rating && (
-                      <span className="text-sm text-yellow-400 ml-4 flex-shrink-0 tabular-nums">
-                        {rating}
-                      </span>
+                      <span className="text-sm text-yellow-400 ml-4 flex-shrink-0 tabular-nums">{rating}</span>
                     )}
                   </div>
                 )
@@ -206,50 +330,155 @@ export function Search() {
         </div>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {results.map(item => (
-          <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition">
-            {item.poster_path ? (
-              <img
-                src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
-                alt={item.title || item.name}
-                className="w-full h-64 object-cover"
-              />
+      {/* ── SEARCH RESULTS ── */}
+      {isSearchMode ? (
+        <>
+          {results.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {results.map(item => (
+                <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition">
+                  {item.poster_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
+                      alt={item.title || item.name}
+                      className="w-full h-64 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-64 bg-gray-700 flex items-center justify-center">
+                      <span className="text-gray-500">No Image</span>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm mb-2 truncate">{item.title || item.name}</h3>
+                    <select
+                      value={itemStatuses[item.id] || ''}
+                      onChange={e => {
+                        const s = e.target.value
+                        if (!s) return
+                        addToLibrary(item, s)
+                      }}
+                      className="w-full py-1.5 px-2 rounded text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
+                      style={{ backgroundColor: getStatusColor(itemStatuses[item.id] || '') }}
+                    >
+                      <option value="" disabled>+ {t('common.add')}</option>
+                      <option value="planned">📋 {t('status.planned')}</option>
+                      <option value="watching">👀 {t('status.watching')}</option>
+                      <option value="watched">✅ {t('status.watched')}</option>
+                      <option value="dropped">❌ {t('status.dropped')}</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !loading && (
+            <p className="text-center text-gray-400 mt-8">{t('search.no_results')}</p>
+          )}
+        </>
+      ) : (
+        /* ── HOME CONTENT ── */
+        <div className="space-y-10">
+
+          {/* Random movie */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-100">{t('search.random_title')}</h2>
+              <button
+                onClick={pickRandom}
+                disabled={homeLoading || !trending.length}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:text-gray-500 rounded-lg text-sm font-semibold transition"
+              >
+                {t('search.random_btn')}
+              </button>
+            </div>
+
+            {randomPick ? (
+              <div className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl">
+                <div className="h-52 sm:h-64 relative">
+                  {randomPick.backdrop_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w1280${randomPick.backdrop_path}`}
+                      alt={randomPick.title || randomPick.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : randomPick.poster_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w500${randomPick.poster_path}`}
+                      alt={randomPick.title || randomPick.name}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-700" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs text-indigo-300 font-semibold mb-1">🎲 {t('search.random_label')}</p>
+                    <h3 className="text-xl font-bold text-white leading-tight">
+                      {randomPick.title || randomPick.name}
+                    </h3>
+                    <p className="text-sm text-gray-300 mt-0.5">
+                      {(randomPick.release_date || randomPick.first_air_date || '').split('-')[0]}
+                      {randomPick.vote_average > 0 && ` · ⭐ ${randomPick.vote_average.toFixed(1)}`}
+                    </p>
+                  </div>
+                  <select
+                    value={itemStatuses[randomPick.id] || ''}
+                    onChange={e => { if (e.target.value) addToLibrary(randomPick, e.target.value) }}
+                    className="flex-shrink-0 py-2 px-3 rounded-lg text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
+                    style={{ backgroundColor: getStatusColor(itemStatuses[randomPick.id] || '') }}
+                  >
+                    <option value="" disabled>+ {t('common.add')}</option>
+                    <option value="planned">📋 {t('status.planned')}</option>
+                    <option value="watching">👀 {t('status.watching')}</option>
+                    <option value="watched">✅ {t('status.watched')}</option>
+                    <option value="dropped">❌ {t('status.dropped')}</option>
+                  </select>
+                </div>
+              </div>
+            ) : !homeLoading && (
+              <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-700 rounded-xl">
+                {t('search.random_hint')}
+              </p>
+            )}
+          </section>
+
+          {/* Trending */}
+          <section>
+            <h2 className="text-lg font-bold text-gray-100 mb-3">{t('search.trending')}</h2>
+            {homeLoading ? (
+              <p className="text-sm text-gray-500">{t('common.loading')}</p>
             ) : (
-              <div className="w-full h-64 bg-gray-700 flex items-center justify-center">
-                <span className="text-gray-500">No Image</span>
+              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
+                {trending.map(item => (
+                  <CardTile
+                    key={item.id}
+                    item={item}
+                    status={itemStatuses[item.id] || ''}
+                    onStatus={s => addToLibrary(item, s)}
+                  />
+                ))}
               </div>
             )}
-            <div className="p-3">
-              <h3 className="font-semibold text-sm mb-2 truncate">
-                {item.title || item.name}
-              </h3>
-              <select
-                value={itemStatuses[item.id] || ''}
-                onChange={(e) => {
-                  const status = e.target.value
-                  if (!status) return
-                  setItemStatuses(prev => ({ ...prev, [item.id]: status }))
-                  addToLibrary(item, status)
-                }}
-                className="w-full py-1.5 px-2 rounded text-sm text-white font-medium cursor-pointer border-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                style={{ backgroundColor: getStatusColor(itemStatuses[item.id] || '') }}
-              >
-                <option value="" disabled>+ {t('common.add')}</option>
-                <option value="planned">📋 {t('status.planned')}</option>
-                <option value="watching">👀 {t('status.watching')}</option>
-                <option value="watched">✅ {t('status.watched')}</option>
-                <option value="dropped">❌ {t('status.dropped')}</option>
-              </select>
-            </div>
-          </div>
-        ))}
-      </div>
+          </section>
 
-      {results.length === 0 && !loading && (
-        <p className="text-center text-gray-400 mt-8">
-          {t('search.start_typing')}
-        </p>
+          {/* Genre rows */}
+          {!homeLoading && genres.map(genre => (
+            <section key={genre.id}>
+              <h2 className="text-lg font-bold text-gray-100 mb-3">{t(genre.key)}</h2>
+              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
+                {genre.movies.map(item => (
+                  <CardTile
+                    key={item.id}
+                    item={item}
+                    status={itemStatuses[item.id] || ''}
+                    onStatus={s => addToLibrary(item, s)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </main>
   )
