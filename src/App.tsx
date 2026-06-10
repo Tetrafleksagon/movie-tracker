@@ -16,9 +16,10 @@ function Navigation() {
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:justify-between items-center gap-2">
+      <div className="max-w-6xl mx-auto grid grid-cols-3 items-center gap-2">
+        <div className="hidden sm:block" />
         <h1
-          className="text-2xl sm:text-4xl font-bold whitespace-nowrap"
+          className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 sm:col-span-1"
           style={{
             letterSpacing: '-0.5px',
             background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
@@ -32,7 +33,7 @@ function Navigation() {
         >
           🎬 Movie Tracker
         </h1>
-        <nav className="flex items-center gap-4 sm:gap-6">
+        <nav className="flex items-center justify-end gap-4 sm:gap-6 col-span-3 sm:col-span-1">
           <Link
             to="/"
             className={`text-sm font-medium transition ${
