@@ -63,8 +63,9 @@ export function SharedLibrary() {
     <div className="min-h-screen bg-gray-900 text-white">
       <header className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span
-            className="text-xl font-bold"
+          <a
+            href="https://filmtrack.pp.ua"
+            className="text-xl font-bold hover:opacity-80 transition"
             style={{
               background: 'linear-gradient(90deg, #3b82f6, #1e3a8a)',
               WebkitBackgroundClip: 'text',
@@ -73,7 +74,7 @@ export function SharedLibrary() {
             }}
           >
             🎬 Movie Tracker
-          </span>
+          </a>
           <Link
             to="/"
             className="text-sm text-blue-400 hover:text-blue-300 transition"
