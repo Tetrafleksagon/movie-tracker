@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { MediaCard } from '../components/MediaCard'
@@ -7,7 +7,9 @@ import { ShareModal } from '../components/ShareModal'
 const PAGE_SIZES = [5, 10, 15] as const
 
 export function Library() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
+  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
   const [items, setItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +24,25 @@ export function Library() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const filters = ['all', 'planned', 'watching', 'watched', 'dropped'] as const
+
+  const localizeItems = useCallback(async (rawItems: any[], lang: string) => {
+    return Promise.all(
+      rawItems.map(async item => {
+        try {
+          const type = item.media_type === 'tv' ? 'tv' : 'movie'
+          const res = await fetch(
+            `https://api.themoviedb.org/3/${type}/${item.tmdb_id}?api_key=${TMDB_KEY}&language=${lang}`
+          )
+          const data = await res.json()
+          return {
+            ...item,
+            title: data.title || data.name || item.title,
+            poster_path: data.poster_path || item.poster_path,
+          }
+        } catch { return item }
+      })
+    )
+  }, [TMDB_KEY])
 
   const totalPages = Math.ceil(filteredItems.length / pageSize)
   const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -47,6 +68,12 @@ export function Library() {
   useEffect(() => {
     setCurrentPage(1)
   }, [activeFilter, pageSize, searchQuery, sortBy])
+
+  // Re-localize titles and posters when language changes
+  useEffect(() => {
+    if (items.length === 0) return
+    localizeItems(items, tmdbLang).then(setItems)
+  }, [i18n.language]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -110,17 +137,22 @@ export function Library() {
 
     if (error) {
       console.error('Error fetching library:', error)
-    } else {
-      setItems((data || []).map(item => ({
-        ...item,
-        title: item.media_cache?.title || item.title || 'Без названия',
-        poster_path: item.media_cache?.poster_path || item.poster_path,
-        vote_average: item.media_cache?.vote_average || item.vote_average,
-        media_type: item.media_cache?.media_type || item.media_type || 'movie',
-        release_date: item.media_cache?.release_date || item.release_date,
-        id: item.tmdb_id,
-      })))
+      setLoading(false)
+      return
     }
+
+    const mapped = (data || []).map(item => ({
+      ...item,
+      title: item.media_cache?.title || item.title || 'Без названия',
+      poster_path: item.media_cache?.poster_path || item.poster_path,
+      vote_average: item.media_cache?.vote_average || item.vote_average,
+      media_type: item.media_cache?.media_type || item.media_type || 'movie',
+      release_date: item.media_cache?.release_date || item.release_date,
+      id: item.tmdb_id,
+    }))
+
+    const localized = await localizeItems(mapped, tmdbLang)
+    setItems(localized)
     setLoading(false)
   }
 
