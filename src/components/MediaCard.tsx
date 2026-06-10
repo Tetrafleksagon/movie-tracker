@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
@@ -16,42 +16,20 @@ export function MediaCard({ item }: { item: any }) {
   const { t, i18n } = useTranslation()
   const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
   const [showModal, setShowModal] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const [history, setHistory] = useState<StatusHistory>([])
+  // Seeded from props: Library already loaded these in its single query, so we
+  // avoid an extra per-card request to Supabase. Local state still tracks the
+  // user's edits (status / rating) optimistically.
+  const [status, setStatus] = useState<string | null>(item.status ?? null)
+  const [updatedAt, setUpdatedAt] = useState<string | null>(item.updated_at ?? null)
+  const [history, setHistory] = useState<StatusHistory>(item.status_history || [])
   const [loading, setLoading] = useState(false)
-  const [userRating, setUserRating] = useState<number | null>(null)
+  const [userRating, setUserRating] = useState<number | null>(item.user_rating ?? null)
   const [hoverRating, setHoverRating] = useState<number | null>(null)
 
   const title = item.title || item.name || t('common.no_title')
   const year = (item.release_date || item.first_air_date || '').split('-')[0] || '—'
   const rating = item.vote_average ? item.vote_average.toFixed(1) : '—'
   const mediaType = item.media_type || 'movie'
-
-  useEffect(() => { checkInLibrary() }, [item.id])
-
-  const checkInLibrary = async () => {
-    try {
-      const user = (await supabase.auth.getUser()).data?.user
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('user_media')
-        .select('status, updated_at, status_history, user_rating')
-        .eq('user_id', user.id)
-        .eq('tmdb_id', item.id)
-        .maybeSingle()
-
-      if (error) { console.error('checkInLibrary error:', error); return }
-
-      if (data) {
-        setStatus(data.status)
-        setUpdatedAt(data.updated_at)
-        setHistory(data.status_history || [])
-        setUserRating(data.user_rating ?? null)
-      }
-    } catch (err) { console.error('checkInLibrary error:', err) }
-  }
 
   const addToLibrary = async (newStatus: string) => {
     try {
