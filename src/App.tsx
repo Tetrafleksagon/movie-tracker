@@ -90,6 +90,9 @@ function AppContent() {
         <Route path="/" element={<Search />} />
         <Route path="/library" element={<Library />} />
       </Routes>
+      <footer className="text-center text-xs text-gray-600 py-6">
+        Copyright Fleksagon {new Date().getFullYear()}
+      </footer>
       <ScrollToTop />
     </div>
   )
