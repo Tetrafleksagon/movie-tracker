@@ -70,7 +70,7 @@ export function Search() {
         </div>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {results.map(item => (
           <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition">
             {item.poster_path ? (

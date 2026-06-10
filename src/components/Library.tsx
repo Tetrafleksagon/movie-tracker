@@ -63,7 +63,7 @@ export function Library() {
   }
 
   return (
-    <div className="space-y-6">
+    <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* Фильтры по статусам */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-1">
         {filters.map(filter => (
@@ -102,6 +102,6 @@ export function Library() {
           ))}
         </div>
       )}
-    </div>
+    </main>
   )
 }
