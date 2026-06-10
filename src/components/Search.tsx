@@ -65,8 +65,9 @@ function CardTile({ item, status, onStatus }: CardTileProps) {
 }
 
 export function Search() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
+  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
 
   // Search state
   const [query, setQuery] = useState('')
@@ -90,9 +91,8 @@ export function Search() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchWrapperRef = useRef<HTMLDivElement>(null)
 
+  // Click-outside handler — only once
   useEffect(() => {
-    fetchHomeData()
-
     const handleClickOutside = (e: MouseEvent) => {
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false)
@@ -102,12 +102,19 @@ export function Search() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const fetchHomeData = async () => {
+  // Home data — reload on language change
+  useEffect(() => {
+    setHomeLoading(true)
+    setRandomPick(null)
+    fetchHomeData(tmdbLang)
+  }, [i18n.language]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchHomeData = async (lang: string) => {
     try {
       const [trendingRes, ...genreResponses] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}`),
+        fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}&language=${lang}`),
         ...GENRE_CONFIGS.map(g =>
-          fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1`)
+          fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1&language=${lang}`)
         ),
       ])
 
@@ -188,7 +195,7 @@ export function Search() {
   const fetchSuggestions = async (q: string) => {
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&language=${tmdbLang}&query=${encodeURIComponent(q)}`
       )
       const data = await res.json()
       const items = (data.results || []).filter((i: any) => i.media_type !== 'person').slice(0, 7)
@@ -233,7 +240,7 @@ export function Search() {
     setItemStatuses({})
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&language=${tmdbLang}&query=${encodeURIComponent(query)}`
       )
       const data = await res.json()
       setResults(data.results || [])
