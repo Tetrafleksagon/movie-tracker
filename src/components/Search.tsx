@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
@@ -7,12 +7,21 @@ export function Search() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
+  const [toast, setToast] = useState<{ message: string; error?: boolean } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (message: string, error = false) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ message, error })
+    toastTimer.current = setTimeout(() => setToast(null), 2000)
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-    
     setLoading(true)
+    setItemStatuses({})
     try {
       const response = await fetch(
         `https://api.themoviedb.org/3/search/multi?api_key=${import.meta.env.VITE_TMDB_API_KEY}&query=${encodeURIComponent(query)}`
@@ -26,7 +35,7 @@ export function Search() {
     }
   }
 
-  const addToLibrary = async (item: any) => {
+  const addToLibrary = async (item: any, status: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -47,23 +56,44 @@ export function Search() {
     const { error } = await supabase.from('user_media').upsert({
       user_id: user.id,
       tmdb_id: item.id,
-      status: 'planned',
+      status,
       updated_at: now,
-      status_history: [{ status: 'planned', time: now }],
+      status_history: [{ status, time: now }],
     }, { onConflict: 'user_id,tmdb_id' })
 
     if (error) {
       console.error('Error adding to library:', error)
-      alert('Error adding to library')
+      showToast('Error adding to library', true)
+      setItemStatuses(prev => { const next = { ...prev }; delete next[item.id]; return next })
     } else {
-      alert(t('common.add'))
+      showToast('✓ ' + title)
     }
+  }
+
+  const getStatusColor = (s: string) => {
+    if (s === 'watched') return '#16a34a'
+    if (s === 'watching') return '#2563eb'
+    if (s === 'dropped') return '#dc2626'
+    if (s === 'planned') return '#4b5563'
+    return '#374151'
   }
 
   return (
     <main className="max-w-6xl mx-auto p-4">
+
+      {toast && (
+        <div
+          onClick={() => setToast(null)}
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-lg text-sm font-medium text-white shadow-lg cursor-pointer select-none ${
+            toast.error ? 'bg-red-600' : 'bg-green-700'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold mb-6">{t('header.search')}</h2>
-      
+
       <form onSubmit={handleSearch} className="mb-8">
         <div className="flex gap-2">
           <input
@@ -101,12 +131,23 @@ export function Search() {
               <h3 className="font-semibold text-sm mb-2 truncate">
                 {item.title || item.name}
               </h3>
-              <button
-                onClick={() => addToLibrary(item)}
-                className="w-full py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition"
+              <select
+                value={itemStatuses[item.id] || ''}
+                onChange={(e) => {
+                  const status = e.target.value
+                  if (!status) return
+                  setItemStatuses(prev => ({ ...prev, [item.id]: status }))
+                  addToLibrary(item, status)
+                }}
+                className="w-full py-1.5 px-2 rounded text-sm text-white font-medium cursor-pointer border-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ backgroundColor: getStatusColor(itemStatuses[item.id] || '') }}
               >
-                + {t('common.add')}
-              </button>
+                <option value="" disabled>+ {t('common.add')}</option>
+                <option value="planned">📋 {t('status.planned')}</option>
+                <option value="watching">👀 {t('status.watching')}</option>
+                <option value="watched">✅ {t('status.watched')}</option>
+                <option value="dropped">❌ {t('status.dropped')}</option>
+              </select>
             </div>
           </div>
         ))}
@@ -119,4 +160,4 @@ export function Search() {
       )}
     </main>
   )
-} // <-- Эта закрывающая скобка была пропущена!
+}
