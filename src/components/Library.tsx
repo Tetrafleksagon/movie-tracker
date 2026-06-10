@@ -3,32 +3,42 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { MediaCard } from '../components/MediaCard'
 
+const PAGE_SIZES = [5, 10, 15] as const
+
 export function Library() {
   const { t } = useTranslation()
   const [items, setItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [pageSize, setPageSize] = useState<number>(10)
+  const [currentPage, setCurrentPage] = useState(1)
   const [currentIndex, setCurrentIndex] = useState(1)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const filters = ['all', 'planned', 'watching', 'watched', 'dropped'] as const
 
-  useEffect(() => {
-    fetchLibrary()
-  }, [])
+  const totalPages = Math.ceil(filteredItems.length / pageSize)
+  const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  useEffect(() => { fetchLibrary() }, [])
 
   useEffect(() => {
-    if (activeFilter === 'all') {
-      setFilteredItems(items)
-    } else {
-      setFilteredItems(items.filter(item => item.status === activeFilter))
-    }
+    setFilteredItems(activeFilter === 'all' ? items : items.filter(i => i.status === activeFilter))
   }, [activeFilter, items])
 
   useEffect(() => {
+    setCurrentPage(1)
+  }, [activeFilter, pageSize])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setCurrentIndex(1)
-    cardRefs.current = cardRefs.current.slice(0, filteredItems.length)
+  }, [currentPage])
+
+  useEffect(() => {
+    setCurrentIndex(1)
+    cardRefs.current = cardRefs.current.slice(0, paginatedItems.length)
 
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
@@ -48,7 +58,11 @@ export function Library() {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [filteredItems])
+  }, [paginatedItems])
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(totalPages, page)))
+  }
 
   const fetchLibrary = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -56,24 +70,14 @@ export function Library() {
 
     const { data, error } = await supabase
       .from('user_media')
-      .select(`
-        *,
-        media_cache:media_cache (
-          tmdb_id,
-          title,
-          poster_path,
-          vote_average,
-          release_date,
-          media_type
-        )
-      `)
+      .select(`*, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)`)
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching library:', error)
     } else {
-      const mergedData = (data || []).map(item => ({
+      setItems((data || []).map(item => ({
         ...item,
         title: item.media_cache?.title || item.title || 'Без названия',
         poster_path: item.media_cache?.poster_path || item.poster_path,
@@ -81,15 +85,15 @@ export function Library() {
         media_type: item.media_cache?.media_type || item.media_type || 'movie',
         release_date: item.media_cache?.release_date || item.release_date,
         id: item.tmdb_id,
-      }))
-      setItems(mergedData)
+      })))
     }
     setLoading(false)
   }
 
   return (
     <main className="max-w-6xl mx-auto px-4 pt-0 pb-6">
-      {/* Sticky: фильтры + счётчик */}
+
+      {/* Sticky: фильтры + размер страницы + счётчик */}
       <div className="sticky top-14 sm:top-[73px] z-40 bg-gray-900 py-4 -mx-4 px-4">
         <div className="flex items-center gap-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
@@ -107,9 +111,29 @@ export function Library() {
               </button>
             ))}
           </div>
+
+          {/* Выбор количества на странице */}
           {!loading && filteredItems.length > 0 && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {PAGE_SIZES.map(size => (
+                <button
+                  key={size}
+                  onClick={() => setPageSize(size)}
+                  className={`px-2 py-1 rounded text-xs font-medium transition ${
+                    pageSize === size
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-800 text-gray-500 hover:text-white'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loading && paginatedItems.length > 0 && (
             <span className="text-xs text-gray-500 flex-shrink-0 tabular-nums">
-              {currentIndex}/{filteredItems.length}
+              {currentIndex}/{paginatedItems.length}
             </span>
           )}
         </div>
@@ -121,22 +145,55 @@ export function Library() {
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 mb-2">
-            {items.length === 0
-              ? t('library.empty')
-              : t('library.no_matches')}
+            {items.length === 0 ? t('library.empty') : t('library.no_matches')}
           </p>
           {items.length === 0 && (
             <p className="text-sm text-gray-500">{t('library.start_searching')}</p>
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredItems.map((item, index) => (
-            <div key={item.tmdb_id} ref={(el: HTMLDivElement | null) => { cardRefs.current[index] = el }}>
-              <MediaCard item={item} />
+        <>
+          <div className="space-y-4">
+            {paginatedItems.map((item, index) => (
+              <div key={item.tmdb_id} ref={(el: HTMLDivElement | null) => { cardRefs.current[index] = el }}>
+                <MediaCard item={item} />
+              </div>
+            ))}
+          </div>
+
+          {/* Пагинация */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-6">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-1.5 rounded bg-gray-800 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                ←
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`w-8 h-8 rounded text-sm font-medium transition ${
+                    page === currentPage
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-1.5 rounded bg-gray-800 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                →
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </main>
   )

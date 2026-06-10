@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
@@ -9,7 +9,25 @@ export function Search() {
   const [loading, setLoading] = useState(false)
   const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
   const [toast, setToast] = useState<{ message: string; error?: boolean } | null>(null)
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchWrapperRef = useRef<HTMLDivElement>(null)
+
+  const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
+
+  // Закрывать подсказки при клике вне поля
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const showToast = (message: string, error = false) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -17,19 +35,55 @@ export function Search() {
     toastTimer.current = setTimeout(() => setToast(null), 2000)
   }
 
+  const fetchSuggestions = async (q: string) => {
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
+      )
+      const data = await res.json()
+      const items = (data.results || [])
+        .filter((i: any) => i.media_type !== 'person')
+        .slice(0, 7)
+      setSuggestions(items)
+      setShowSuggestions(items.length > 0)
+    } catch {}
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setQuery(value)
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    if (!value.trim()) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    debounceTimer.current = setTimeout(() => fetchSuggestions(value), 350)
+  }
+
+  const selectSuggestion = (item: any) => {
+    setQuery(item.title || item.name)
+    setResults(suggestions)
+    setShowSuggestions(false)
+    setSuggestions([])
+    setItemStatuses({})
+  }
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    setShowSuggestions(false)
     setLoading(true)
     setItemStatuses({})
     try {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${import.meta.env.VITE_TMDB_API_KEY}&query=${encodeURIComponent(query)}`
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`
       )
-      const data = await response.json()
+      const data = await res.json()
       setResults(data.results || [])
-    } catch (error) {
-      console.error('Search error:', error)
+    } catch (err) {
+      console.error('Search error:', err)
     } finally {
       setLoading(false)
     }
@@ -95,21 +149,59 @@ export function Search() {
       <h2 className="text-2xl font-bold mb-6">{t('header.search')}</h2>
 
       <form onSubmit={handleSearch} className="mb-8">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder={t('search.placeholder')}
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            className="flex-1 p-3 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded font-medium transition"
-          >
-            {loading ? t('common.loading') : t('header.search')}
-          </button>
+        <div ref={searchWrapperRef} className="relative">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder={t('search.placeholder')}
+              value={query}
+              onChange={handleInputChange}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              className="flex-1 p-3 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoComplete="off"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded font-medium transition"
+            >
+              {loading ? t('common.loading') : t('header.search')}
+            </button>
+          </div>
+
+          {/* Подсказки */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 overflow-hidden">
+              {suggestions.map(item => {
+                const title = item.title || item.name
+                const originalTitle = item.original_title || item.original_name
+                const year = (item.release_date || item.first_air_date || '').split('-')[0]
+                const rating = item.vote_average > 0 ? item.vote_average.toFixed(2) : null
+
+                return (
+                  <div
+                    key={item.id}
+                    onMouseDown={(e) => { e.preventDefault(); selectSuggestion(item) }}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-700 cursor-pointer border-b border-gray-700/50 last:border-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{title}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {originalTitle !== title && originalTitle}
+                        {originalTitle !== title && year && ', '}
+                        {year}
+                      </p>
+                    </div>
+                    {rating && (
+                      <span className="text-sm text-yellow-400 ml-4 flex-shrink-0 tabular-nums">
+                        {rating}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </form>
 
