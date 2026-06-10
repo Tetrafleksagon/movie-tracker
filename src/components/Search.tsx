@@ -58,18 +58,20 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
       </div>
       {canLeft && (
         <div
-          className="absolute left-0 top-0 bottom-2 w-14 flex items-center justify-center pointer-events-none"
+          className="absolute left-0 top-0 bottom-2 w-14 flex items-center justify-center cursor-pointer group"
           style={{ background: 'linear-gradient(to right, #111827 25%, transparent)' }}
+          onClick={() => ref.current?.scrollBy({ left: -320, behavior: 'smooth' })}
         >
-          <span className="text-white/60 text-4xl leading-none select-none">‹</span>
+          <span className="text-white/60 group-hover:text-white/90 text-4xl leading-none select-none transition-colors">‹</span>
         </div>
       )}
       {canRight && (
         <div
-          className="absolute right-0 top-0 bottom-2 w-14 flex items-center justify-center pointer-events-none"
+          className="absolute right-0 top-0 bottom-2 w-14 flex items-center justify-center cursor-pointer group"
           style={{ background: 'linear-gradient(to left, #111827 25%, transparent)' }}
+          onClick={() => ref.current?.scrollBy({ left: 320, behavior: 'smooth' })}
         >
-          <span className="text-white/60 text-4xl leading-none select-none">›</span>
+          <span className="text-white/60 group-hover:text-white/90 text-4xl leading-none select-none transition-colors">›</span>
         </div>
       )}
     </div>
