@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
+import { MovieModal } from './MovieModal'
 
 type StatusHistory = { status: string; time: string }[]
 
@@ -12,7 +13,9 @@ const RATING_COLORS: Record<number, string> = {
 }
 
 export function MediaCard({ item }: { item: any }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const [showModal, setShowModal] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [history, setHistory] = useState<StatusHistory>([])
@@ -129,8 +132,15 @@ export function MediaCard({ item }: { item: any }) {
       )}
 
       {/* Постер */}
-      <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40 sm:h-60" style={{ aspectRatio: '2/3' }}>
-        <img src={getPosterUrl(item.poster_path)} className="absolute inset-0 w-full h-full object-cover object-top" alt={title} />
+      <div
+        className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-40 sm:h-60 cursor-pointer group"
+        style={{ aspectRatio: '2/3' }}
+        onClick={() => setShowModal(true)}
+      >
+        <img src={getPosterUrl(item.poster_path)} className="absolute inset-0 w-full h-full object-cover object-top group-hover:brightness-75 transition-all duration-200" alt={title} />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className="text-white text-4xl drop-shadow-lg">🔍</span>
+        </div>
         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span>{getStars(item.vote_average)}</span>
           <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
@@ -140,7 +150,7 @@ export function MediaCard({ item }: { item: any }) {
       {/* Контент */}
       <div className="flex flex-col gap-2 justify-center min-w-0 flex-1">
         <div>
-          <h3 className="m-0 text-lg font-bold text-white leading-snug break-words">{title}</h3>
+          <h3 className="m-0 text-lg font-bold text-white leading-snug break-words cursor-pointer hover:text-blue-400 transition-colors" onClick={() => setShowModal(true)}>{title}</h3>
           <p className="mt-1 text-sm text-gray-400 flex items-center gap-2 flex-wrap">
             <span>{year}</span>
             <span className="text-gray-600">•</span>
@@ -203,6 +213,16 @@ export function MediaCard({ item }: { item: any }) {
 
         {loading && <span className="text-xs text-gray-500">{t('common.saving')}...</span>}
       </div>
+
+      {showModal && (
+        <MovieModal
+          item={{ ...item, id: item.id ?? item.tmdb_id }}
+          status={status || ''}
+          lang={tmdbLang}
+          onStatus={addToLibrary}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   )
 }
