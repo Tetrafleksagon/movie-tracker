@@ -20,11 +20,20 @@ type Props = {
 export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   const { t } = useTranslation()
   const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY
+  const langShort = lang.startsWith('ru') ? 'ru' : 'en'
   const [details, setDetails] = useState<any>(null)
+  const [playTrailer, setPlayTrailer] = useState(false)
 
   useEffect(() => {
+    setDetails(null)
+    setPlayTrailer(false)
+
     const type = item.media_type === 'tv' ? 'tv' : 'movie'
-    fetch(`https://api.themoviedb.org/3/${type}/${item.id}?api_key=${TMDB_KEY}&language=${lang}`)
+    // One request pulls details + trailers + cast + watch providers.
+    fetch(
+      `https://api.themoviedb.org/3/${type}/${item.id}?api_key=${TMDB_KEY}&language=${lang}` +
+      `&append_to_response=videos,credits,watch/providers&include_video_language=${langShort},en`
+    )
       .then(r => r.json())
       .then(setDetails)
       .catch(() => {})
@@ -56,6 +65,31 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   const isTV = item.media_type === 'tv'
   const seasons = details?.number_of_seasons
 
+  // Trailer: score YouTube clips so the UI-language trailer wins when it exists,
+  // preferring Trailer > Teaser > other, with English as fallback.
+  const videos: any[] = details?.videos?.results || []
+  const ytVideos = videos.filter(v => v.site === 'YouTube')
+  const videoScore = (v: any) => {
+    let s = v.type === 'Trailer' ? 1000 : v.type === 'Teaser' ? 500 : 100
+    if (v.iso_639_1 === langShort) s += 200
+    if (v.official) s += 10
+    return s
+  }
+  const trailer = ytVideos.length
+    ? [...ytVideos].sort((a, b) => videoScore(b) - videoScore(a))[0]
+    : undefined
+
+  // Cast: top billed.
+  const cast: any[] = (details?.credits?.cast || []).slice(0, 12)
+
+  // Watch providers (JustWatch via TMDB), region by UI language.
+  const region = lang.startsWith('ru') ? 'RU' : 'US'
+  const providerRegions = details?.['watch/providers']?.results || {}
+  const providerInfo = providerRegions[region] || providerRegions['US'] || null
+  const providerList: any[] = providerInfo
+    ? (providerInfo.flatrate || providerInfo.rent || providerInfo.buy || [])
+    : []
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
@@ -77,51 +111,74 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
         {/* Scrollable area */}
         <div className="overflow-y-auto">
 
-          {/* Backdrop */}
-          <div className="relative h-52 sm:h-72 flex-shrink-0">
-            {backdrop ? (
-              <img
-                src={`https://image.tmdb.org/t/p/w1280${backdrop}`}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-            ) : poster ? (
-              <img
-                src={`https://image.tmdb.org/t/p/w500${poster}`}
-                alt={title}
-                className="w-full h-full object-cover object-top"
+          {/* Backdrop / trailer */}
+          <div className="relative h-52 sm:h-72 flex-shrink-0 bg-gray-900">
+            {playTrailer && trailer ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                title={title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
               />
             ) : (
-              <div className="w-full h-full bg-gray-700" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-800/10 to-transparent" />
+              <>
+                {backdrop ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w1280${backdrop}`}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : poster ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${poster}`}
+                    alt={title}
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-700" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-800/10 to-transparent" />
 
-            {/* Title block */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 pr-12">
-              <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{title}</h2>
-              <p className="text-sm text-gray-300 mt-1 flex items-center flex-wrap gap-x-2 gap-y-0.5">
-                {year && <span>{year}</span>}
-                {isTV && seasons && (
-                  <>
-                    <span className="text-gray-600">·</span>
-                    <span>{seasons} {t('modal.seasons')}</span>
-                  </>
+                {/* Play trailer button */}
+                {trailer && (
+                  <button
+                    onClick={() => setPlayTrailer(true)}
+                    title={t('modal.trailer')}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-black/60 hover:bg-red-600 flex items-center justify-center text-white text-2xl transition-colors shadow-lg group"
+                  >
+                    <span className="ml-1 group-hover:scale-110 transition-transform">▶</span>
+                  </button>
                 )}
-                {runtime && (
-                  <>
-                    <span className="text-gray-600">·</span>
-                    <span>{runtime}</span>
-                  </>
-                )}
-                {rating && (
-                  <>
-                    <span className="text-gray-600">·</span>
-                    <span className="text-yellow-400 font-semibold">⭐ {rating}</span>
-                    {voteCount && <span className="text-gray-500 text-xs">({voteCount})</span>}
-                  </>
-                )}
-              </p>
-            </div>
+
+                {/* Title block */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 pr-12">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{title}</h2>
+                  <p className="text-sm text-gray-300 mt-1 flex items-center flex-wrap gap-x-2 gap-y-0.5">
+                    {year && <span>{year}</span>}
+                    {isTV && seasons && (
+                      <>
+                        <span className="text-gray-600">·</span>
+                        <span>{seasons} {t('modal.seasons')}</span>
+                      </>
+                    )}
+                    {runtime && (
+                      <>
+                        <span className="text-gray-600">·</span>
+                        <span>{runtime}</span>
+                      </>
+                    )}
+                    {rating && (
+                      <>
+                        <span className="text-gray-600">·</span>
+                        <span className="text-yellow-400 font-semibold">⭐ {rating}</span>
+                        {voteCount && <span className="text-gray-500 text-xs">({voteCount})</span>}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Body */}
@@ -158,6 +215,64 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
                 <div className="h-3 bg-gray-700 rounded w-4/6" />
               </div>
             ) : null}
+
+            {/* Where to watch */}
+            {providerList.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">{t('modal.watch_providers')}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  {providerList.map((p: any) => (
+                    <img
+                      key={p.provider_id}
+                      src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                      alt={p.provider_name}
+                      title={p.provider_name}
+                      className="w-9 h-9 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                  ))}
+                  {providerInfo?.link && (
+                    <a
+                      href={providerInfo.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300 ml-1"
+                    >
+                      JustWatch →
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Cast */}
+            {cast.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">{t('modal.cast')}</h3>
+                <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
+                  {cast.map((c: any) => (
+                    <div key={c.id} className="flex-shrink-0 w-20 text-center">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-700 mb-1 flex items-center justify-center">
+                        {c.profile_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${c.profile_path}`}
+                            alt={c.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-2xl text-gray-500">👤</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-200 leading-tight line-clamp-2">{c.name}</p>
+                      {c.character && (
+                        <p className="text-[10px] text-gray-500 leading-tight line-clamp-2">{c.character}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Add to library */}
             <select

@@ -496,7 +496,11 @@ export function Search() {
             </div>
 
             {randomPick ? (
-              <div className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl">
+              <div
+                className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl cursor-pointer"
+                onClick={() => setSelectedItem(randomPick)}
+                title={t('search.random_label')}
+              >
                 <div className="h-64 sm:h-80 lg:h-[28rem] relative">
                   {randomPick.backdrop_path ? (
                     <img
@@ -515,11 +519,7 @@ export function Search() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 </div>
-                <div
-                  className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 cursor-pointer"
-                  onClick={() => setSelectedItem(randomPick)}
-                  title={t('search.random_label')}
-                >
+                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-xs text-indigo-300 font-semibold mb-1">🎲 {t('search.random_label')}</p>
                     <h3 className="text-xl font-bold text-white leading-tight">

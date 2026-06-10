@@ -40,7 +40,10 @@ export default {
     min: "min"
   },
   modal: {
-    seasons: "seasons"
+    seasons: "seasons",
+    trailer: "Trailer",
+    watch_providers: "Where to watch",
+    cast: "Cast"
   },
   auth: {
     email: "Email address",

@@ -40,7 +40,10 @@ export default {
     min: "мин"
   },
   modal: {
-    seasons: "сезонов"
+    seasons: "сезонов",
+    trailer: "Трейлер",
+    watch_providers: "Где смотреть",
+    cast: "В ролях"
   },
   auth: {
     email: "Email адрес",
