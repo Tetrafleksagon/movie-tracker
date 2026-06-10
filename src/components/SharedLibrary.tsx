@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
+import { MovieModal } from './MovieModal'
 
 const RATING_COLORS: Record<number, string> = {
   1: '#7f1d1d', 2: '#991b1b', 3: '#b91c1c',
@@ -12,10 +13,12 @@ const RATING_COLORS: Record<number, string> = {
 
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
 
   useEffect(() => {
     if (userId) fetchSharedLibrary(userId)
@@ -100,12 +103,19 @@ export function SharedLibrary() {
               return (
                 <div key={item.tmdb_id} className="flex gap-4 bg-gray-800 p-4 rounded-xl border border-gray-700">
                   {/* Постер */}
-                  <div className="relative rounded-lg overflow-hidden flex-shrink-0 w-20 sm:w-28" style={{ aspectRatio: '2/3' }}>
+                  <div
+                    className="relative rounded-lg overflow-hidden flex-shrink-0 w-20 sm:w-28 cursor-pointer group"
+                    style={{ aspectRatio: '2/3' }}
+                    onClick={() => setSelectedItem(item)}
+                  >
                     <img
                       src={getPosterUrl(item.poster_path)}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:brightness-75 transition-all duration-200"
                       alt={item.title}
                     />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <span className="text-white text-3xl drop-shadow-lg">🔍</span>
+                    </div>
                     {tmdbRating && (
                       <div style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.85)', padding: '2px 5px', borderRadius: 4, fontSize: 10, color: '#fbbf24', fontWeight: 700 }}>
                         ⭐ {tmdbRating}
@@ -116,7 +126,7 @@ export function SharedLibrary() {
                   {/* Инфо */}
                   <div className="flex flex-col gap-2 justify-center flex-1 min-w-0">
                     <div>
-                      <h3 className="font-bold text-white text-base leading-snug break-words">{item.title}</h3>
+                      <h3 className="font-bold text-white text-base leading-snug break-words cursor-pointer hover:text-blue-400 transition-colors" onClick={() => setSelectedItem(item)}>{item.title}</h3>
                       <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
                         <span>{year}</span>
                         <span className="text-gray-600">•</span>
@@ -157,6 +167,16 @@ export function SharedLibrary() {
           </div>
         )}
       </main>
+
+      {selectedItem && (
+        <MovieModal
+          item={{ ...selectedItem, id: selectedItem.tmdb_id }}
+          status=""
+          lang={tmdbLang}
+          onStatus={() => {}}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
 
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
