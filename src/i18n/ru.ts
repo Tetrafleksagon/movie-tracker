@@ -3,7 +3,8 @@ export default {
   header: {
     search: "Поиск",
     library: "Библиотека",
-    logout: "Выйти"
+    logout: "Выйти",
+    sign_in: "Войти"
   },
   filters: {
     all: "Все",

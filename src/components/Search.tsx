@@ -148,7 +148,11 @@ export function Search() {
     setItemStatuses(prev => ({ ...prev, [item.id]: status }))
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      showToast(t('common.please_login'), true)
+      setItemStatuses(prev => { const next = { ...prev }; delete next[item.id]; return next })
+      return
+    }
 
     const title = item.title || item.name
     const now = new Date().toISOString()

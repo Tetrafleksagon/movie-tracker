@@ -9,10 +9,9 @@ import { ScrollToTop } from './components/ScrollToTop'
 import { supabase } from './lib/supabase'
 import { useTranslation } from 'react-i18next'
 
-function Navigation() {
+function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
   const location = useLocation()
-
   const isActive = (path: string) => location.pathname === path
 
   return (
@@ -52,44 +51,45 @@ function Navigation() {
             {t('header.library')}
           </Link>
           <LanguageSwitcher />
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="text-sm text-gray-300 hover:text-white transition"
-          >
-            {t('header.logout')}
-          </button>
+          {!authLoading && (
+            user ? (
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="text-sm text-gray-300 hover:text-white transition"
+              >
+                {t('header.logout')}
+              </button>
+            ) : (
+              <Link
+                to="/library"
+                className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition"
+              >
+                {t('header.sign_in')}
+              </Link>
+            )
+          )}
         </nav>
       </div>
     </header>
   )
 }
 
-function AppContent() {
-  const { t } = useTranslation()
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  if (!user) {
-    return <Auth />
-  }
-
+function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) {
   return (
     <div className="min-h-screen bg-gray-900">
-      <Navigation />
+      <Navigation user={user} authLoading={authLoading} />
       <Routes>
         <Route path="/" element={<Search />} />
-        <Route path="/library" element={<Library />} />
+        <Route
+          path="/library"
+          element={
+            authLoading
+              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
+              : user
+                ? <Library />
+                : <Auth />
+          }
+        />
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
@@ -100,11 +100,27 @@ function AppContent() {
 }
 
 function App() {
+  const [user, setUser] = useState<any>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/share/:userId" element={<SharedLibrary />} />
-        <Route path="*" element={<AppContent />} />
+        <Route path="*" element={<AppContent user={user} authLoading={authLoading} />} />
       </Routes>
     </BrowserRouter>
   )

@@ -3,7 +3,8 @@ export default {
   header: {
     search: "Search",
     library: "Library",
-    logout: "Logout"
+    logout: "Logout",
+    sign_in: "Sign In"
   },
   filters: {
     all: "All",
