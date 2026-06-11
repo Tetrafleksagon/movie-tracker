@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'Movie Tracker',
           short_name: 'Movie Tracker',
-          description: 'Трекер фильмов и сериалов: ищи, отмечай просмотренное, делись библиотекой',
-          lang: 'ru',
+          description: 'Track movies and TV shows: search, mark what you watched, share your library',
+          lang: 'en',
           start_url: '/',
           display: 'standalone',
           theme_color: '#1f2937',
