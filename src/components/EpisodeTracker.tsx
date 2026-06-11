@@ -84,7 +84,7 @@ function SeasonRow({ tmdbId, season, lang, watched, onToggle, onMarkSeason }: Se
 
           {Array.from({ length: season.episode_count }, (_, i) => i + 1).map(e => {
             const isWatched = watched.has(epKey(n, e))
-            const epName = seasonDetails?.episodes?.[i]?.name
+            const epName = seasonDetails?.episodes?.find((ep: any) => ep.episode_number === e)?.name
             return (
               <button
                 key={e}
@@ -185,7 +185,7 @@ export function EpisodeTracker({ tmdbId, seasons, lang, status, onStatus }: Prop
         .from('user_episodes')
         .upsert(
           { user_id: user.id, tmdb_id: tmdbId, season, episode },
-          { onConflict: 'user_id,tmdb_id,season,episode' }
+          { onConflict: 'user_id,tmdb_id,season,episode', ignoreDuplicates: true }
         )
       if (error) { console.error('Episode mark error:', error); return }
       const next = [...rows, { season, episode }]
@@ -204,9 +204,11 @@ export function EpisodeTracker({ tmdbId, seasons, lang, status, onStatus }: Prop
       const inserts = Array.from({ length: season.episode_count }, (_, i) => ({
         user_id: user.id, tmdb_id: tmdbId, season: n, episode: i + 1,
       }))
+      // ignoreDuplicates: already-watched rows stay untouched (insert-only,
+      // so the RLS insert policy is enough — there is no update policy).
       const { error } = await supabase
         .from('user_episodes')
-        .upsert(inserts, { onConflict: 'user_id,tmdb_id,season,episode' })
+        .upsert(inserts, { onConflict: 'user_id,tmdb_id,season,episode', ignoreDuplicates: true })
       if (error) { console.error('Season mark error:', error); return }
       const existing = new Set(rows.map(r => epKey(r.season, r.episode)))
       const added = inserts
