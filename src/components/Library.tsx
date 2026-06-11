@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { localizeMediaItems } from '../lib/tmdb'
 import { MediaCard } from '../components/MediaCard'
@@ -9,10 +10,9 @@ const PAGE_SIZES = [5, 10, 15] as const
 
 export function Library() {
   const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
   const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
-  const [items, setItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'rating' | 'title' | 'user_rating'>('date')
@@ -25,11 +25,39 @@ export function Library() {
 
   const filters = ['all', 'planned', 'watching', 'watched', 'dropped'] as const
 
+  // Library rows, cached per language; localization cache keeps switches fast.
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['library', tmdbLang],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
+      const { data, error } = await supabase
+        .from('user_media')
+        .select(`*, user_rating, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)`)
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+
+      if (error) throw error
+
+      const mapped = (data || []).map(item => ({
+        ...item,
+        title: item.media_cache?.title || item.title || 'Без названия',
+        poster_path: item.media_cache?.poster_path || item.poster_path,
+        vote_average: item.media_cache?.vote_average || item.vote_average,
+        media_type: item.media_cache?.media_type || item.media_type || 'movie',
+        release_date: item.media_cache?.release_date || item.release_date,
+        id: item.tmdb_id,
+      }))
+
+      return localizeMediaItems(mapped, tmdbLang)
+    },
+  })
+
   const totalPages = Math.ceil(filteredItems.length / pageSize)
   const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   useEffect(() => {
-    fetchLibrary()
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
   }, [])
 
@@ -49,12 +77,6 @@ export function Library() {
   useEffect(() => {
     setCurrentPage(1)
   }, [activeFilter, pageSize, searchQuery, sortBy])
-
-  // Re-localize titles and posters when language changes
-  useEffect(() => {
-    if (items.length === 0) return
-    localizeMediaItems(items, tmdbLang).then(setItems)
-  }, [i18n.language]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -102,39 +124,12 @@ export function Library() {
     if (error) {
       console.error('Error deleting item:', error)
     } else {
-      setItems(prev => prev.filter(i => i.tmdb_id !== tmdbId))
+      // Drop the item from every cached language variant; refresh stats.
+      queryClient.setQueriesData({ queryKey: ['library'] }, (old: any[] | undefined) =>
+        old?.filter(i => i.tmdb_id !== tmdbId)
+      )
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
     }
-  }
-
-  const fetchLibrary = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('user_media')
-      .select(`*, user_rating, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)`)
-      .eq('user_id', user.id)
-      .order('updated_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching library:', error)
-      setLoading(false)
-      return
-    }
-
-    const mapped = (data || []).map(item => ({
-      ...item,
-      title: item.media_cache?.title || item.title || 'Без названия',
-      poster_path: item.media_cache?.poster_path || item.poster_path,
-      vote_average: item.media_cache?.vote_average || item.vote_average,
-      media_type: item.media_cache?.media_type || item.media_type || 'movie',
-      release_date: item.media_cache?.release_date || item.release_date,
-      id: item.tmdb_id,
-    }))
-
-    const localized = await localizeMediaItems(mapped, tmdbLang)
-    setItems(localized)
-    setLoading(false)
   }
 
   return (

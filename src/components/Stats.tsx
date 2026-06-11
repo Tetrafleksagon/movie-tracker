@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
 import { STATUS_OPTIONS, getStatusColor, RATING_COLORS } from '../lib/status'
@@ -60,20 +61,20 @@ function Bar({ label, value, max, color }: { label: string; value: number; max: 
 
 export function Stats() {
   const { t } = useTranslation()
-  const [rows, setRows] = useState<Row[] | null>(null)
 
-  useEffect(() => {
-    (async () => {
+  const { data: rows } = useQuery<Row[]>({
+    queryKey: ['stats'],
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setRows([]); return }
+      if (!user) return []
       const { data, error } = await supabase
         .from('user_media')
         .select('status, user_rating, media_cache:media_cache (title, poster_path, vote_average, release_date, media_type)')
         .eq('user_id', user.id)
-      if (error) { console.error('Stats fetch error:', error); setRows([]); return }
-      setRows((data as any) || [])
-    })()
-  }, [])
+      if (error) { console.error('Stats fetch error:', error); return [] }
+      return (data as any) || []
+    },
+  })
 
   const stats = useMemo(() => {
     if (!rows || rows.length === 0) return null

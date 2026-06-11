@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { getPosterUrl } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
@@ -8,6 +9,7 @@ import { RATING_COLORS, getStatusIcon, type StatusHistory } from '../lib/status'
 
 export function MediaCard({ item }: { item: any }) {
   const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
   const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
   const [showModal, setShowModal] = useState(false)
   // Seeded from props: Library already loaded these in its single query, so we
@@ -46,7 +48,12 @@ export function MediaCard({ item }: { item: any }) {
       }, { onConflict: 'user_id,tmdb_id' })
 
       if (error) { console.error('Status save error:', error); alert(t('common.error_save')) }
-      else { setStatus(newStatus); setUpdatedAt(now); setHistory(updatedHistory) }
+      else {
+        setStatus(newStatus); setUpdatedAt(now); setHistory(updatedHistory)
+        // Library/Stats caches now hold stale rows — refetch them next time.
+        queryClient.invalidateQueries({ queryKey: ['library'] })
+        queryClient.invalidateQueries({ queryKey: ['stats'] })
+      }
       setLoading(false)
     } catch (err) {
       console.error('addToLibrary error:', err)
@@ -65,7 +72,11 @@ export function MediaCard({ item }: { item: any }) {
       .eq('user_id', user.id)
       .eq('tmdb_id', item.id)
     if (error) console.error('Rating save error:', error)
-    else setUserRating(newRating)
+    else {
+      setUserRating(newRating)
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+    }
   }
 
   const formatDate = (dateStr: string | null) => {

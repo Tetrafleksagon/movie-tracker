@@ -9,6 +9,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
 import { supabase } from './lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 
 function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
@@ -121,6 +122,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
 }
 
 function App() {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<any>(null)
   const [authLoading, setAuthLoading] = useState(true)
 
@@ -131,11 +133,20 @@ function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      setUser(prev => {
+        const next = session?.user ?? null
+        // User changed (login/logout) — drop per-user caches so the next
+        // account never sees the previous one's library/stats.
+        if (prev?.id !== next?.id) {
+          queryClient.removeQueries({ queryKey: ['library'] })
+          queryClient.removeQueries({ queryKey: ['stats'] })
+        }
+        return next
+      })
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <BrowserRouter>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
@@ -117,6 +118,7 @@ function CardTile({ item, status, onStatus, onClick }: CardTileProps) {
 
 export function Search() {
   const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
   const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
 
   // Search state
@@ -126,9 +128,6 @@ export function Search() {
   const [isSearchMode, setIsSearchMode] = useState(false)
 
   // Home state
-  const [homeLoading, setHomeLoading] = useState(true)
-  const [trending, setTrending] = useState<any[]>([])
-  const [genres, setGenres] = useState<GenreRow[]>([])
   const [randomPick, setRandomPick] = useState<any | null>(null)
   const [randomLoading, setRandomLoading] = useState(false)
 
@@ -154,41 +153,36 @@ export function Search() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Home data — reload on language change
+  // Reset the random pick when the language changes (its texts are stale).
   useEffect(() => {
-    setHomeLoading(true)
     setRandomPick(null)
-    fetchHomeData(tmdbLang)
-  }, [i18n.language]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
-  const fetchHomeData = async (lang: string) => {
-    try {
+  // Home data (trending + genre rows), cached per language by React Query.
+  const { data: homeData, isLoading: homeLoading } = useQuery({
+    queryKey: ['home', tmdbLang],
+    queryFn: async () => {
       const [trendingRes, ...genreResponses] = await Promise.all([
-        fetch(`/api/tmdb/trending/all/week?language=${lang}`),
+        fetch(`/api/tmdb/trending/all/week?language=${tmdbLang}`),
         ...GENRE_CONFIGS.map(g =>
-          fetch(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1&language=${lang}`)
+          fetch(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1&language=${tmdbLang}`)
         ),
       ])
-
       const trendingData = await trendingRes.json()
       const genreData = await Promise.all(genreResponses.map(r => r.json()))
-
-      setTrending(
-        (trendingData.results || [])
+      return {
+        trending: (trendingData.results || [])
           .filter((i: any) => i.media_type !== 'person')
-          .slice(0, 14)
-      )
-      setGenres(
-        GENRE_CONFIGS.map((g, i) => ({
+          .slice(0, 14),
+        genres: GENRE_CONFIGS.map((g, i) => ({
           ...g,
           movies: (genreData[i].results || []).slice(0, 10),
-        }))
-      )
-    } catch (e) {
-      console.error('Home data fetch error:', e)
-    }
-    setHomeLoading(false)
-  }
+        })) as GenreRow[],
+      }
+    },
+  })
+  const trending: any[] = homeData?.trending ?? []
+  const genres: GenreRow[] = homeData?.genres ?? []
 
   const pickRandom = async () => {
     setRandomLoading(true)
@@ -254,8 +248,11 @@ export function Search() {
       setItemStatuses(prev => { const next = { ...prev }; delete next[item.id]; return next })
     } else {
       showToast('✓ ' + title)
+      // Library/Stats caches are stale after the upsert.
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
     }
-  }, [showToast, t])
+  }, [showToast, t, queryClient])
 
   const fetchSuggestions = async (q: string) => {
     try {

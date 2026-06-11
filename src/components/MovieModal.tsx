@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { StatusSelect } from './StatusSelect'
 
 type Props = {
@@ -13,22 +14,21 @@ type Props = {
 export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   const { t } = useTranslation()
   const langShort = lang.startsWith('ru') ? 'ru' : 'en'
-  const [details, setDetails] = useState<any>(null)
   const [playTrailer, setPlayTrailer] = useState(false)
 
-  useEffect(() => {
-    setDetails(null)
-    setPlayTrailer(false)
+  const type = item.media_type === 'tv' ? 'tv' : 'movie'
+  // One request pulls details + trailers + cast; cached per title+language.
+  const { data: details } = useQuery({
+    queryKey: ['details', type, item.id, lang],
+    queryFn: () =>
+      fetch(
+        `/api/tmdb/${type}/${item.id}?language=${lang}` +
+        `&append_to_response=videos,credits&include_video_language=${langShort},en`
+      ).then(r => r.json()),
+  })
 
-    const type = item.media_type === 'tv' ? 'tv' : 'movie'
-    // One request pulls details + trailers + cast.
-    fetch(
-      `/api/tmdb/${type}/${item.id}?language=${lang}` +
-      `&append_to_response=videos,credits&include_video_language=${langShort},en`
-    )
-      .then(r => r.json())
-      .then(setDetails)
-      .catch(() => {})
+  useEffect(() => {
+    setPlayTrailer(false)
 
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onEsc)
