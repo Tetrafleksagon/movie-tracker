@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { fetchMediaDetails } from '../lib/tmdb'
 import { StatusSelect } from './StatusSelect'
 import { EpisodeTracker } from './EpisodeTracker'
 
@@ -21,11 +22,7 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   // One request pulls details + trailers + cast; cached per title+language.
   const { data: details } = useQuery({
     queryKey: ['details', type, item.id, lang],
-    queryFn: () =>
-      fetch(
-        `/api/tmdb/${type}/${item.id}?language=${lang}` +
-        `&append_to_response=videos,credits&include_video_language=${langShort},en`
-      ).then(r => r.json()),
+    queryFn: () => fetchMediaDetails(type, item.id, lang),
   })
 
   useEffect(() => {

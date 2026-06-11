@@ -8,6 +8,16 @@ export function getPosterUrl(path: string | null): string {
   return IMAGE_BASE + path
 }
 
+// Full details (incl. trailers, cast, seasons) in one request. Used with the
+// shared query key ['details', type, id, lang] by both MovieModal and MediaCard.
+export function fetchMediaDetails(type: 'movie' | 'tv', id: number, lang: string) {
+  const langShort = lang.startsWith('ru') ? 'ru' : 'en'
+  return fetch(
+    `${BASE_URL}/${type}/${id}?language=${lang}` +
+    `&append_to_response=videos,credits&include_video_language=${langShort},en`
+  ).then(r => r.json())
+}
+
 export async function searchMedia(query: string, page = 1) {
   const params = new URLSearchParams({
     query,

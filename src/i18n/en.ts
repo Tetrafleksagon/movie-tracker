@@ -49,7 +49,8 @@ export default {
     season: "Season",
     episode: "Episode",
     mark_all: "✓ Mark entire season",
-    unmark_all: "Unmark season"
+    unmark_all: "Unmark season",
+    next: "Next"
   },
   auth: {
     email: "Email address",

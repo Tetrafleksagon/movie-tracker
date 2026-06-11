@@ -2,21 +2,21 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-
-type Season = { season_number: number; episode_count: number; name?: string }
-type WatchedRow = { season: number; episode: number }
+import {
+  epKey, realSeasons, totalEpisodeCount, statusAfterProgress,
+  fetchAllEpisodes, insertEpisode,
+  type EpisodeRow, type SeasonInfo,
+} from '../lib/episodes'
 
 type Props = {
   tmdbId: number
-  seasons: Season[]
+  seasons: SeasonInfo[]
   lang: string
   status: string
   onStatus: (s: string) => void
 }
 
-const epKey = (s: number, e: number) => `${s}:${e}`
-
-function ProgressBar({ value, max }: { value: number; max: number }) {
+export function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? (value / max) * 100 : 0
   return (
     <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden">
@@ -30,11 +30,11 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
 
 type SeasonRowProps = {
   tmdbId: number
-  season: Season
+  season: SeasonInfo
   lang: string
   watched: Set<string>
   onToggle: (season: number, episode: number, isWatched: boolean) => void
-  onMarkSeason: (season: Season, mark: boolean) => void
+  onMarkSeason: (season: SeasonInfo, mark: boolean) => void
 }
 
 function SeasonRow({ tmdbId, season, lang, watched, onToggle, onMarkSeason }: SeasonRowProps) {
@@ -119,129 +119,95 @@ export function EpisodeTracker({ tmdbId, seasons, lang, status, onStatus }: Prop
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
-  // Specials (season 0) are excluded: they would make "fully watched" unreachable.
-  const realSeasons = useMemo(
-    () => (seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0),
-    [seasons]
-  )
-  const totalEpisodes = useMemo(
-    () => realSeasons.reduce((sum, s) => sum + s.episode_count, 0),
-    [realSeasons]
-  )
+  const shownSeasons = useMemo(() => realSeasons(seasons), [seasons])
+  const totalEpisodes = useMemo(() => totalEpisodeCount(shownSeasons), [shownSeasons])
 
-  // null → not signed in (tracker hidden), [] → signed in, nothing watched yet.
-  const { data: watchedRows } = useQuery<WatchedRow[] | null>({
-    queryKey: ['episodes', tmdbId],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return null
-      const { data, error } = await supabase
-        .from('user_episodes')
-        .select('season, episode')
-        .eq('user_id', user.id)
-        .eq('tmdb_id', tmdbId)
-      if (error) throw error
-      return data || []
-    },
-  })
+  // One cache entry holds the user's entire progress (all shows).
+  const { data: allRows } = useQuery({ queryKey: ['episodes'], queryFn: fetchAllEpisodes })
 
+  const showRows = useMemo(
+    () => (allRows || []).filter(r => r.tmdb_id === tmdbId),
+    [allRows, tmdbId]
+  )
   const watched = useMemo(
-    () => new Set((watchedRows || []).map(r => epKey(r.season, r.episode))),
-    [watchedRows]
+    () => new Set(showRows.map(r => epKey(r.season, r.episode))),
+    [showRows]
   )
 
-  if (realSeasons.length === 0 || watchedRows === null || watchedRows === undefined) return null
+  // null → signed out (tracker hidden), undefined → still loading.
+  if (shownSeasons.length === 0 || allRows === null || allRows === undefined) return null
 
-  const setCache = (rows: WatchedRow[]) => {
-    queryClient.setQueryData(['episodes', tmdbId], rows)
+  const setCache = (updater: (rows: EpisodeRow[]) => EpisodeRow[]) => {
+    const all = (queryClient.getQueryData(['episodes']) as EpisodeRow[] | null) || []
+    queryClient.setQueryData(['episodes'], updater(all))
     queryClient.invalidateQueries({ queryKey: ['stats'] })
   }
 
-  // Keep the library status in sync with actual progress.
-  const applyAutoStatus = (newCount: number) => {
-    if (newCount >= totalEpisodes && totalEpisodes > 0) {
-      if (status !== 'watched') onStatus('watched')
-    } else if (newCount > 0) {
-      if (!status || status === 'planned' || status === 'watched') onStatus('watching')
-    }
+  const syncStatus = (newShowCount: number) => {
+    const next = statusAfterProgress(newShowCount, totalEpisodes, status)
+    if (next) onStatus(next)
   }
 
   const toggleEpisode = async (season: number, episode: number, isWatched: boolean) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const rows = watchedRows || []
     if (isWatched) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
       const { error } = await supabase
         .from('user_episodes')
         .delete()
         .match({ user_id: user.id, tmdb_id: tmdbId, season, episode })
       if (error) { console.error('Episode unmark error:', error); return }
-      const next = rows.filter(r => !(r.season === season && r.episode === episode))
-      setCache(next)
-      applyAutoStatus(next.length)
+      setCache(rows => rows.filter(r => !(r.tmdb_id === tmdbId && r.season === season && r.episode === episode)))
+      syncStatus(showRows.length - 1)
     } else {
-      const { error } = await supabase
-        .from('user_episodes')
-        .upsert(
-          { user_id: user.id, tmdb_id: tmdbId, season, episode },
-          { onConflict: 'user_id,tmdb_id,season,episode', ignoreDuplicates: true }
-        )
+      const { error } = await insertEpisode(tmdbId, season, episode)
       if (error) { console.error('Episode mark error:', error); return }
-      const next = [...rows, { season, episode }]
-      setCache(next)
-      applyAutoStatus(next.length)
+      setCache(rows => [...rows, { tmdb_id: tmdbId, season, episode }])
+      syncStatus(showRows.length + 1)
     }
   }
 
-  const markSeason = async (season: Season, mark: boolean) => {
+  const markSeason = async (season: SeasonInfo, mark: boolean) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const n = season.season_number
-    const rows = watchedRows || []
     if (mark) {
       const inserts = Array.from({ length: season.episode_count }, (_, i) => ({
         user_id: user.id, tmdb_id: tmdbId, season: n, episode: i + 1,
       }))
-      // ignoreDuplicates: already-watched rows stay untouched (insert-only,
-      // so the RLS insert policy is enough — there is no update policy).
       const { error } = await supabase
         .from('user_episodes')
         .upsert(inserts, { onConflict: 'user_id,tmdb_id,season,episode', ignoreDuplicates: true })
       if (error) { console.error('Season mark error:', error); return }
-      const existing = new Set(rows.map(r => epKey(r.season, r.episode)))
       const added = inserts
-        .filter(r => !existing.has(epKey(r.season, r.episode)))
-        .map(r => ({ season: r.season, episode: r.episode }))
-      const next = [...rows, ...added]
-      setCache(next)
-      applyAutoStatus(next.length)
+        .filter(r => !watched.has(epKey(r.season, r.episode)))
+        .map(r => ({ tmdb_id: tmdbId, season: r.season, episode: r.episode }))
+      setCache(rows => [...rows, ...added])
+      syncStatus(showRows.length + added.length)
     } else {
       const { error } = await supabase
         .from('user_episodes')
         .delete()
         .match({ user_id: user.id, tmdb_id: tmdbId, season: n })
       if (error) { console.error('Season unmark error:', error); return }
-      const next = rows.filter(r => r.season !== n)
-      setCache(next)
-      applyAutoStatus(next.length)
+      const removed = showRows.filter(r => r.season === n).length
+      setCache(rows => rows.filter(r => !(r.tmdb_id === tmdbId && r.season === n)))
+      syncStatus(showRows.length - removed)
     }
   }
-
-  const totalWatched = watched.size
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
         <h3 className="text-sm font-semibold text-gray-300 whitespace-nowrap">{t('episodes.title')}</h3>
-        <ProgressBar value={totalWatched} max={totalEpisodes} />
+        <ProgressBar value={watched.size} max={totalEpisodes} />
         <span className="text-xs text-gray-400 tabular-nums whitespace-nowrap">
-          {totalWatched}/{totalEpisodes}
+          {watched.size}/{totalEpisodes}
         </span>
       </div>
       <div className="space-y-1.5">
-        {realSeasons.map(s => (
+        {shownSeasons.map(s => (
           <SeasonRow
             key={s.season_number}
             tmdbId={tmdbId}

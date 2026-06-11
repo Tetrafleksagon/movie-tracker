@@ -140,6 +140,7 @@ function App() {
         if (prev?.id !== next?.id) {
           queryClient.removeQueries({ queryKey: ['library'] })
           queryClient.removeQueries({ queryKey: ['stats'] })
+          queryClient.removeQueries({ queryKey: ['episodes'] })
         }
         return next
       })

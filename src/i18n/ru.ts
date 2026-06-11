@@ -49,7 +49,8 @@ export default {
     season: "Сезон",
     episode: "Серия",
     mark_all: "✓ Отметить весь сезон",
-    unmark_all: "Снять отметки с сезона"
+    unmark_all: "Снять отметки с сезона",
+    next: "Далее"
   },
   auth: {
     email: "Email адрес",

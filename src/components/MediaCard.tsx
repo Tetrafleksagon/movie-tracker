@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
-import { getPosterUrl } from '../lib/tmdb'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getPosterUrl, fetchMediaDetails } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
+import { ProgressBar } from './EpisodeTracker'
 import { RATING_COLORS, getStatusIcon, type StatusHistory } from '../lib/status'
+import {
+  epKey, realSeasons, totalEpisodeCount, nextUnwatched, statusAfterProgress,
+  fetchAllEpisodes, insertEpisode, type EpisodeRow,
+} from '../lib/episodes'
 
 export function MediaCard({ item }: { item: any }) {
   const { t, i18n } = useTranslation()
@@ -26,6 +31,42 @@ export function MediaCard({ item }: { item: any }) {
   const year = (item.release_date || item.first_air_date || '').split('-')[0] || '—'
   const rating = item.vote_average ? item.vote_average.toFixed(1) : '—'
   const mediaType = item.media_type || 'movie'
+  const isTV = mediaType === 'tv'
+
+  // Episode progress (TV only): one shared ['episodes'] query serves every
+  // card; details give the season structure (same cache key as the modal).
+  const { data: allEpisodes } = useQuery({
+    queryKey: ['episodes'],
+    queryFn: fetchAllEpisodes,
+    enabled: isTV,
+  })
+  const { data: tvDetails } = useQuery({
+    queryKey: ['details', 'tv', item.id, tmdbLang],
+    queryFn: () => fetchMediaDetails('tv', item.id, tmdbLang),
+    enabled: isTV,
+  })
+  const seasons = useMemo(() => realSeasons(tvDetails?.seasons), [tvDetails])
+  const watchedEps = useMemo(
+    () => new Set(
+      ((allEpisodes || []) as EpisodeRow[])
+        .filter(r => r.tmdb_id === item.id)
+        .map(r => epKey(r.season, r.episode))
+    ),
+    [allEpisodes, item.id]
+  )
+  const totalEps = totalEpisodeCount(seasons)
+  const nextEp = nextUnwatched(seasons, watchedEps)
+
+  const plusOne = async () => {
+    if (!nextEp) return
+    const { error } = await insertEpisode(item.id, nextEp.season, nextEp.episode)
+    if (error) { console.error('Episode mark error:', error); return }
+    const all = (queryClient.getQueryData(['episodes']) as EpisodeRow[] | null) || []
+    queryClient.setQueryData(['episodes'], [...all, { tmdb_id: item.id, season: nextEp.season, episode: nextEp.episode }])
+    queryClient.invalidateQueries({ queryKey: ['stats'] })
+    const nextStatus = statusAfterProgress(watchedEps.size + 1, totalEps, status || '')
+    if (nextStatus) addToLibrary(nextStatus)
+  }
 
   const addToLibrary = async (newStatus: string) => {
     try {
@@ -140,6 +181,32 @@ export function MediaCard({ item }: { item: any }) {
           className="w-full sm:w-auto rounded-md text-sm text-white font-medium py-1.5 px-2.5 border-none cursor-pointer"
           style={{ opacity: loading ? 0.7 : 1 }}
         />
+
+        {/* Прогресс по сериям (только сериалы) */}
+        {isTV && allEpisodes != null && totalEps > 0 && (
+          <div className="flex items-center gap-2">
+            <ProgressBar value={watchedEps.size} max={totalEps} />
+            <span className="text-xs text-gray-400 tabular-nums whitespace-nowrap">
+              {watchedEps.size}/{totalEps}
+            </span>
+            {nextEp ? (
+              <>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {t('episodes.next')}: S{nextEp.season}E{nextEp.episode}
+                </span>
+                <button
+                  onClick={plusOne}
+                  title={`+1 ${t('episodes.episode')}`}
+                  className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition"
+                >
+                  +1
+                </button>
+              </>
+            ) : (
+              <span className="text-xs text-green-400 whitespace-nowrap">✓</span>
+            )}
+          </div>
+        )}
 
         {/* Личный рейтинг */}
         <div className="flex items-center gap-1.5 flex-wrap">
