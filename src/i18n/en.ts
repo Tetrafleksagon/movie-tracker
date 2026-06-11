@@ -128,6 +128,7 @@ export default {
     rating_distribution: "Rating distribution",
     no_ratings: "You haven't rated anything yet",
     by_decade: "By decade",
-    top_rated: "Your top rated"
+    top_rated: "Your top rated",
+    episodes_watched: "Episodes watched"
   }
 } as const

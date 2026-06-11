@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
 import { STATUS_OPTIONS, getStatusColor, RATING_COLORS } from '../lib/status'
+import { fetchAllEpisodes } from '../lib/episodes'
 
 type Row = {
   status: string
@@ -61,6 +62,9 @@ function Bar({ label, value, max, color }: { label: string; value: number; max: 
 
 export function Stats() {
   const { t } = useTranslation()
+
+  const { data: allEpisodes } = useQuery({ queryKey: ['episodes'], queryFn: fetchAllEpisodes })
+  const episodesWatched = (allEpisodes || []).length
 
   const { data: rows } = useQuery<Row[]>({
     queryKey: ['stats'],
@@ -145,10 +149,11 @@ export function Stats() {
       <h1 className="text-xl font-bold text-gray-100">{t('stats.title')}</h1>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <StatCard label={t('stats.total')} value={stats.total} accent="#fff" />
         <StatCard label={t('stats.movies')} value={stats.byType.movie} accent="#60a5fa" />
         <StatCard label={t('stats.tv_shows')} value={stats.byType.tv} accent="#a78bfa" />
+        <StatCard label={t('stats.episodes_watched')} value={episodesWatched} accent="#818cf8" />
         <StatCard
           label={t('stats.avg_score')}
           value={stats.avgRating ? stats.avgRating.toFixed(1) : '—'}

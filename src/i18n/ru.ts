@@ -128,6 +128,7 @@ export default {
     rating_distribution: "Распределение оценок",
     no_ratings: "Вы ещё не ставили оценок",
     by_decade: "По десятилетиям",
-    top_rated: "Лучшее по вашей оценке"
+    top_rated: "Лучшее по вашей оценке",
+    episodes_watched: "Серий посмотрено"
   }
 } as const
