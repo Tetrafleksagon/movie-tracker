@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { StatusSelect } from './StatusSelect'
+import { EpisodeTracker } from './EpisodeTracker'
 
 type Props = {
   item: any
@@ -203,6 +204,17 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
                 <div className="h-3 bg-gray-700 rounded w-4/6" />
               </div>
             ) : null}
+
+            {/* Episode tracking (TV only, signed-in users) */}
+            {isTV && details?.seasons && (
+              <EpisodeTracker
+                tmdbId={item.id}
+                seasons={details.seasons}
+                lang={lang}
+                status={status}
+                onStatus={onStatus}
+              />
+            )}
 
             {/* Cast */}
             {cast.length > 0 && (

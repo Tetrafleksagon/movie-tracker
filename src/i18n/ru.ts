@@ -44,6 +44,13 @@ export default {
     trailer: "Трейлер",
     cast: "В ролях"
   },
+  episodes: {
+    title: "Прогресс просмотра",
+    season: "Сезон",
+    episode: "Серия",
+    mark_all: "✓ Отметить весь сезон",
+    unmark_all: "Снять отметки с сезона"
+  },
   auth: {
     email: "Email адрес",
     password: "Пароль",

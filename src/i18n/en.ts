@@ -44,6 +44,13 @@ export default {
     trailer: "Trailer",
     cast: "Cast"
   },
+  episodes: {
+    title: "Watch progress",
+    season: "Season",
+    episode: "Episode",
+    mark_all: "✓ Mark entire season",
+    unmark_all: "Unmark season"
+  },
   auth: {
     email: "Email address",
     password: "Password",
