@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,6 +13,13 @@ export function AddToListMenu({ item }: { item: ListMedia }) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState('')
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // When the panel opens it expands downward, often below the modal's fold —
+  // scroll it into view so the user doesn't have to scroll manually.
+  useEffect(() => {
+    if (open) panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [open])
 
   const { data: lists } = useQuery({ queryKey: ['lists'], queryFn: fetchLists })
   const { data: memberIds } = useQuery({
@@ -66,7 +73,7 @@ export function AddToListMenu({ item }: { item: ListMedia }) {
       </button>
 
       {open && (
-        <div className="mt-2 bg-gray-900/60 border border-gray-700 rounded-lg p-2 space-y-1">
+        <div ref={panelRef} className="mt-2 bg-gray-900/60 border border-gray-700 rounded-lg p-2 space-y-1">
           {lists.length === 0 && (
             <p className="text-xs text-gray-500 px-1 py-1">{t('lists.empty_hint')}</p>
           )}

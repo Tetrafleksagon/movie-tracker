@@ -74,18 +74,33 @@ export async function removeFromList(listId: string, tmdbId: number) {
 }
 
 export async function fetchListItems(listId: string) {
-  const { data, error } = await supabase
+  // Two-step join (no PostgREST embedding): user_list_items has no FK to
+  // media_cache, so we fetch the links, then the cached metadata, and merge.
+  const { data: links, error } = await supabase
     .from('user_list_items')
-    .select('tmdb_id, added_at, media_cache:media_cache (tmdb_id, title, poster_path, vote_average, release_date, media_type)')
+    .select('tmdb_id, added_at')
     .eq('list_id', listId)
     .order('added_at', { ascending: false })
   if (error) throw error
-  return (data || []).map((row: any) => ({
-    tmdb_id: row.tmdb_id,
-    title: row.media_cache?.title || '',
-    poster_path: row.media_cache?.poster_path ?? null,
-    vote_average: row.media_cache?.vote_average ?? 0,
-    release_date: row.media_cache?.release_date ?? '',
-    media_type: row.media_cache?.media_type || 'movie',
-  }))
+  if (!links || links.length === 0) return []
+
+  const ids = links.map(l => l.tmdb_id)
+  const { data: media, error: mediaError } = await supabase
+    .from('media_cache')
+    .select('tmdb_id, title, poster_path, vote_average, release_date, media_type')
+    .in('tmdb_id', ids)
+  if (mediaError) throw mediaError
+
+  const byId = new Map((media || []).map((m: any) => [m.tmdb_id, m]))
+  return links.map(l => {
+    const m: any = byId.get(l.tmdb_id)
+    return {
+      tmdb_id: l.tmdb_id,
+      title: m?.title || '',
+      poster_path: m?.poster_path ?? null,
+      vote_average: m?.vote_average ?? 0,
+      release_date: m?.release_date ?? '',
+      media_type: m?.media_type || 'movie',
+    }
+  })
 }
