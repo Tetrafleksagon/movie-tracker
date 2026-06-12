@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
-import { defineConfig, loadEnv } from 'vite'
+import { loadEnv } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -22,6 +23,15 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    test: {
+      environment: 'node',
+      // Dummy values so the Supabase client (created at import time) doesn't
+      // throw during tests, independent of any local .env file.
+      env: {
+        VITE_SUPABASE_URL: 'http://localhost',
+        VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+      },
+    },
     define: {
       __APP_VERSION__: JSON.stringify(buildVersion()),
     },
