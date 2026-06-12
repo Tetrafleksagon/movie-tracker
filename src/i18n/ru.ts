@@ -4,6 +4,7 @@ export default {
     search: "Поиск",
     library: "Библиотека",
     stats: "Статистика",
+    lists: "Списки",
     logout: "Выйти",
     sign_in: "Войти"
   },
@@ -43,6 +44,19 @@ export default {
     seasons: "сезонов",
     trailer: "Трейлер",
     cast: "В ролях"
+  },
+  lists: {
+    title: "Мои списки",
+    create_placeholder: "Название нового списка…",
+    create: "Создать",
+    empty: "У вас пока нет списков. Создайте первый выше.",
+    list_empty: "В этом списке пока пусто",
+    delete: "Удалить список",
+    delete_confirm: "Удалить этот список?",
+    remove: "Убрать из списка",
+    add_to_list: "В список",
+    new_list: "Новый список…",
+    empty_hint: "Создайте список ниже"
   },
   errors: {
     title: "Что-то пошло не так",

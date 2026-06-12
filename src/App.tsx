@@ -4,6 +4,7 @@ import { Auth } from './components/Auth'
 import { Search } from './components/Search'
 import { Library } from './components/Library'
 import { Stats } from './components/Stats'
+import { Lists } from './components/Lists'
 import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
@@ -74,6 +75,16 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
             <span className="sm:hidden">📊</span>
             <span className="hidden sm:inline">{t('header.stats')}</span>
           </Link>
+          <Link
+            to="/lists"
+            title={t('header.lists')}
+            className={`text-sm font-medium transition ${
+              isActive('/lists') ? 'text-blue-400' : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            <span className="sm:hidden">📑</span>
+            <span className="hidden sm:inline">{t('header.lists')}</span>
+          </Link>
           <LanguageSwitcher />
           {!authLoading && (
             user ? (
@@ -124,6 +135,16 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
                 : <Auth />
           }
         />
+        <Route
+          path="/lists"
+          element={
+            authLoading
+              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
+              : user
+                ? <Lists />
+                : <Auth />
+          }
+        />
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
@@ -154,6 +175,10 @@ function App() {
           queryClient.removeQueries({ queryKey: ['library'] })
           queryClient.removeQueries({ queryKey: ['stats'] })
           queryClient.removeQueries({ queryKey: ['episodes'] })
+          queryClient.removeQueries({ queryKey: ['lists'] })
+          queryClient.removeQueries({ queryKey: ['list-items'] })
+          queryClient.removeQueries({ queryKey: ['list-counts'] })
+          queryClient.removeQueries({ queryKey: ['item-lists'] })
         }
         return next
       })

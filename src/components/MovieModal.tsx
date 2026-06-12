@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchMediaDetails } from '../lib/tmdb'
 import { StatusSelect } from './StatusSelect'
 import { EpisodeTracker } from './EpisodeTracker'
+import { AddToListMenu } from './AddToListMenu'
 
 type Props = {
   item: any
@@ -247,6 +248,20 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
               value={status}
               onStatus={onStatus}
               className="w-full py-2.5 px-3 rounded-lg text-sm text-white font-medium cursor-pointer border-none focus:outline-none"
+            />
+
+            {/* Add to custom lists */}
+            <AddToListMenu
+              item={{
+                id: item.id,
+                media_type: item.media_type,
+                title: d.title,
+                name: d.name,
+                poster_path: d.poster_path,
+                vote_average: d.vote_average,
+                release_date: d.release_date,
+                first_air_date: d.first_air_date,
+              }}
             />
 
           </div>

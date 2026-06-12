@@ -4,6 +4,7 @@ export default {
     search: "Search",
     library: "Library",
     stats: "Stats",
+    lists: "Lists",
     logout: "Logout",
     sign_in: "Sign In"
   },
@@ -43,6 +44,19 @@ export default {
     seasons: "seasons",
     trailer: "Trailer",
     cast: "Cast"
+  },
+  lists: {
+    title: "My lists",
+    create_placeholder: "New list name…",
+    create: "Create",
+    empty: "You don't have any lists yet. Create your first one above.",
+    list_empty: "This list is empty",
+    delete: "Delete list",
+    delete_confirm: "Delete this list?",
+    remove: "Remove from list",
+    add_to_list: "Add to list",
+    new_list: "New list…",
+    empty_hint: "Create a list below"
   },
   errors: {
     title: "Something went wrong",
