@@ -11,9 +11,15 @@ export function Lists() {
   const { t, i18n } = useTranslation()
   const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
   const queryClient = useQueryClient()
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set())
   const [newName, setNewName] = useState('')
   const [selectedItem, setSelectedItem] = useState<any>(null)
+
+  const toggleOpen = (id: string) => setOpenIds(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   const { data: lists, isLoading } = useQuery({ queryKey: ['lists'], queryFn: fetchLists })
 
@@ -30,7 +36,7 @@ export function Lists() {
     if (!confirm(t('lists.delete_confirm'))) return
     const { error } = await deleteList(id)
     if (error) { console.error('deleteList error:', error); return }
-    if (openId === id) setOpenId(null)
+    setOpenIds(prev => { const next = new Set(prev); next.delete(id); return next })
     queryClient.invalidateQueries({ queryKey: ['lists'] })
   }
 
@@ -69,8 +75,8 @@ export function Lists() {
               key={l.id}
               id={l.id}
               name={l.name}
-              open={openId === l.id}
-              onToggle={() => setOpenId(openId === l.id ? null : l.id)}
+              open={openIds.has(l.id)}
+              onToggle={() => toggleOpen(l.id)}
               onDelete={() => handleDelete(l.id)}
               tmdbLang={tmdbLang}
               onSelectItem={setSelectedItem}
