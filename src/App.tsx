@@ -20,9 +20,8 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto grid grid-cols-3 items-center gap-2">
-        <div className="hidden xl:block" />
-        <h1 className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 xl:col-span-1">
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-2">
+        <h1 className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center">
           <Link
             to="/"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -40,7 +39,7 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
             🎬 Movie Tracker
           </Link>
         </h1>
-        <nav className="flex items-center justify-end gap-4 sm:gap-6 col-span-3 xl:col-span-1">
+        <nav className="flex items-center justify-center flex-wrap gap-4 sm:gap-6">
           <Link
             to="/"
             onClick={() => {
