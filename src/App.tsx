@@ -8,6 +8,7 @@ import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
 import { supabase } from './lib/supabase'
+import { APP_VERSION } from './lib/version'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -20,24 +21,35 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto grid grid-cols-3 items-center gap-2">
         <div className="hidden xl:block" />
-        <h1
-          className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 xl:col-span-1"
-          style={{
-            letterSpacing: '-0.5px',
-            background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
-            backgroundSize: '300% 100%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            animation: 'shimmer 2s linear infinite',
-            filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
-          }}
-        >
-          🎬 Movie Tracker
+        <h1 className="text-2xl sm:text-4xl font-bold whitespace-nowrap text-center col-span-3 xl:col-span-1">
+          <Link
+            to="/"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{
+              letterSpacing: '-0.5px',
+              background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
+              backgroundSize: '300% 100%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              animation: 'shimmer 4s linear infinite',
+              filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
+            }}
+          >
+            🎬 Movie Tracker
+          </Link>
         </h1>
         <nav className="flex items-center justify-end gap-4 sm:gap-6 col-span-3 xl:col-span-1">
           <Link
             to="/"
+            onClick={() => {
+              // Wait a tick so the route renders first when coming from another page.
+              setTimeout(() => {
+                const el = document.getElementById('search-input')
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                el?.focus({ preventScroll: true })
+              }, 50)
+            }}
             className={`text-sm font-medium transition ${
               isActive('/') ? 'text-blue-400' : 'text-gray-300 hover:text-white'
             }`}
@@ -115,6 +127,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
+        <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
       <ScrollToTop />
     </div>

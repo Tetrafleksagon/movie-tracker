@@ -352,6 +352,7 @@ export function Search() {
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input
+                id="search-input"
                 type="text"
                 placeholder={t('search.placeholder')}
                 value={query}

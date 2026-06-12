@@ -1,6 +1,20 @@
+import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// App version: major comes from package.json (bumped by hand for big features),
+// minor is the deployed commit's short hash (Cloudflare Pages exposes it as
+// CF_PAGES_COMMIT_SHA; local builds fall back to git).
+function buildVersion(): string {
+  const [major, minor] = JSON.parse(readFileSync('package.json', 'utf-8')).version.split('.')
+  let sha = process.env.CF_PAGES_COMMIT_SHA?.slice(0, 7)
+  if (!sha) {
+    try { sha = execSync('git rev-parse --short HEAD').toString().trim() } catch { sha = 'dev' }
+  }
+  return `${major}.${minor}.${sha}`
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -8,6 +22,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    define: {
+      __APP_VERSION__: JSON.stringify(buildVersion()),
+    },
     plugins: [
       react(),
       VitePWA({

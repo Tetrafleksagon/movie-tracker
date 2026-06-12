@@ -3,7 +3,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { APP_VERSION } from './lib/version'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+console.info(`Movie Tracker v${APP_VERSION}`)
 
 const queryClient = new QueryClient({
   defaultOptions: {

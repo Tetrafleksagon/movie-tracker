@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
+import { APP_VERSION } from '../lib/version'
 import { RATING_COLORS, getStatusColor } from '../lib/status'
 import { MovieModal } from './MovieModal'
 
@@ -168,6 +169,7 @@ export function SharedLibrary() {
 
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
+        <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
     </div>
   )
