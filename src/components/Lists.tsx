@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getPosterUrl } from '../lib/tmdb'
+import { getPosterUrl, localizeMediaItems } from '../lib/tmdb'
 import { MovieModal } from './MovieModal'
 import {
   fetchLists, createList, deleteList, fetchListItems, removeFromList,
@@ -102,13 +102,14 @@ type ListBlockProps = {
   onSelectItem: (item: any) => void
 }
 
-function ListBlock({ id, name, open, onToggle, onDelete, onSelectItem }: ListBlockProps) {
+function ListBlock({ id, name, open, onToggle, onDelete, tmdbLang, onSelectItem }: ListBlockProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
+  // Localize posters/titles to the current language (cached), like the library.
   const { data: items } = useQuery({
-    queryKey: ['list-items', id],
-    queryFn: () => fetchListItems(id),
+    queryKey: ['list-items', id, tmdbLang],
+    queryFn: () => fetchListItems(id).then(rows => localizeMediaItems(rows, tmdbLang)),
     enabled: open,
   })
   // Count is loaded once a list is opened; collapsed lists just show a chevron.
