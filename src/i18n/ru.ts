@@ -49,7 +49,8 @@ export default {
     title: "Мои списки",
     create_placeholder: "Название нового списка…",
     create: "Создать",
-    empty: "У вас пока нет списков. Создайте первый выше.",
+    empty: "У вас пока нет списков",
+    empty_sub: "Создайте список выше или добавьте фильм в список прямо из его карточки — кнопка «📑 В список».",
     list_empty: "В этом списке пока пусто",
     delete: "Удалить список",
     delete_confirm: "Удалить этот список?",
@@ -115,7 +116,16 @@ export default {
     sort_date: "Дата",
     sort_rating: "TMDB",
     sort_title: "А→Я",
-    sort_user_rating: "Моя оценка"
+    sort_user_rating: "Моя оценка",
+    go_search: "К поиску"
+  },
+  onboarding: {
+    welcome_title: "Добро пожаловать в Movie Tracker!",
+    step_search: "Найди фильм или сериал",
+    step_add: "Добавь в библиотеку",
+    step_track: "Отмечай прогресс и оценки",
+    step_lists: "Собирай свои списки",
+    dismiss: "Скрыть"
   },
   share: {
     button: "Поделиться",

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { EmptyState } from './EmptyState'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
@@ -131,10 +131,13 @@ export function Stats() {
 
   if (!stats) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-400 mb-2">{t('stats.empty')}</p>
-        <Link to="/" className="text-blue-400 hover:text-blue-300 text-sm">{t('library.start_searching')}</Link>
-      </div>
+      <EmptyState
+        icon="📊"
+        title={t('stats.empty')}
+        subtitle={t('library.start_searching')}
+        actionLabel={t('library.go_search')}
+        actionTo="/"
+      />
     )
   }
 

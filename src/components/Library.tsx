@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { localizeMediaItems } from '../lib/tmdb'
 import { MediaCard } from '../components/MediaCard'
 import { ShareModal } from '../components/ShareModal'
+import { EmptyState } from '../components/EmptyState'
 
 const PAGE_SIZES = [5, 10, 15] as const
 
@@ -229,14 +230,17 @@ export function Library() {
       {loading ? (
         <p className="text-center text-gray-400 py-8">{t('common.loading')}</p>
       ) : filteredItems.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-400 mb-2">
-            {items.length === 0 ? t('library.empty') : t('library.no_matches')}
-          </p>
-          {items.length === 0 && (
-            <p className="text-sm text-gray-500">{t('library.start_searching')}</p>
-          )}
-        </div>
+        items.length === 0 ? (
+          <EmptyState
+            icon="🎬"
+            title={t('library.empty')}
+            subtitle={t('library.start_searching')}
+            actionLabel={t('library.go_search')}
+            actionTo="/"
+          />
+        ) : (
+          <p className="text-center text-gray-400 py-12">{t('library.no_matches')}</p>
+        )
       ) : (
         <>
           <div className="space-y-4">

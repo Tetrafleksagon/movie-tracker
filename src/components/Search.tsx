@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
+import { WelcomeTip } from './WelcomeTip'
 
 const GENRE_CONFIGS = [
   { id: 28,  key: 'genres.action' },
@@ -450,6 +451,8 @@ export function Search() {
       ) : (
         /* ── HOME CONTENT ── */
         <div className="space-y-10">
+
+          <WelcomeTip />
 
           {/* Random movie */}
           <section>

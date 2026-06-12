@@ -49,7 +49,8 @@ export default {
     title: "My lists",
     create_placeholder: "New list name…",
     create: "Create",
-    empty: "You don't have any lists yet. Create your first one above.",
+    empty: "You don't have any lists yet",
+    empty_sub: "Create one above, or add a title to a list right from its card — the “📑 Add to list” button.",
     list_empty: "This list is empty",
     delete: "Delete list",
     delete_confirm: "Delete this list?",
@@ -115,7 +116,16 @@ export default {
     sort_date: "Date",
     sort_rating: "TMDB",
     sort_title: "A→Z",
-    sort_user_rating: "My score"
+    sort_user_rating: "My score",
+    go_search: "Go to search"
+  },
+  onboarding: {
+    welcome_title: "Welcome to Movie Tracker!",
+    step_search: "Find a movie or show",
+    step_add: "Add it to your library",
+    step_track: "Track progress and ratings",
+    step_lists: "Build your own lists",
+    dismiss: "Dismiss"
   },
   share: {
     button: "Share",

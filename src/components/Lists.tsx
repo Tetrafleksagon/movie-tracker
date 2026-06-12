@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getPosterUrl, localizeMediaItems } from '../lib/tmdb'
 import { MovieModal } from './MovieModal'
+import { EmptyState } from './EmptyState'
 import {
   fetchLists, createList, deleteList, fetchListItems, removeFromList,
 } from '../lib/lists'
@@ -67,7 +68,7 @@ export function Lists() {
       </div>
 
       {(lists || []).length === 0 ? (
-        <p className="text-center text-gray-500 py-12">{t('lists.empty')}</p>
+        <EmptyState icon="📑" title={t('lists.empty')} subtitle={t('lists.empty_sub')} />
       ) : (
         <div className="space-y-3">
           {(lists || []).map(l => (
