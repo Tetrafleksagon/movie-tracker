@@ -44,6 +44,11 @@ export default {
     trailer: "Trailer",
     cast: "Cast"
   },
+  errors: {
+    title: "Something went wrong",
+    message: "An unexpected error occurred. Please try reloading the page.",
+    reload: "Reload page"
+  },
   episodes: {
     title: "Watch progress",
     season: "Season",
