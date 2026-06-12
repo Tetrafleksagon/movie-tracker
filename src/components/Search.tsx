@@ -185,19 +185,25 @@ export function Search() {
   const trending: any[] = homeData?.trending ?? []
   const genres: GenreRow[] = homeData?.genres ?? []
 
+  // A pool of popular movies fetched once per language (cached forever for the
+  // session), then randomized on the client — so repeated "random" clicks cost
+  // no TMDB calls and can't be used to hammer the proxy.
   const pickRandom = async () => {
     setRandomLoading(true)
     try {
-      const page = Math.floor(Math.random() * 150) + 1
-      const res = await fetch(
-        `/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
-      )
-      const data = await res.json()
-      const pool = (data.results || []).filter(
-        (m: any) => m.poster_path && m.backdrop_path && m.id !== randomPick?.id
-      )
-      if (pool.length > 0) {
-        setRandomPick(pool[Math.floor(Math.random() * pool.length)])
+      const pool: any[] = await queryClient.fetchQuery({
+        queryKey: ['random-pool', tmdbLang],
+        staleTime: Infinity,
+        queryFn: async () => {
+          const pages = await Promise.all([1, 2, 3].map(p =>
+            fetch(`/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${p}`).then(r => r.json())
+          ))
+          return pages.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
+        },
+      })
+      const candidates = pool.filter(m => m.id !== randomPick?.id)
+      if (candidates.length > 0) {
+        setRandomPick(candidates[Math.floor(Math.random() * candidates.length)])
       }
     } catch (e) {
       console.error('Random pick error:', e)

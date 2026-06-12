@@ -3,13 +3,44 @@
 // The API key lives in the server-side env var TMDB_API_KEY and never reaches
 // the browser. GET responses are edge-cached to cut TMDB calls and speed up
 // repeat requests. (Typed loosely: this dir is built by Cloudflare, not by our tsc.)
+//
+// Abuse protection: requests must originate from our own site (same-origin
+// Referer/Origin) and may only hit a small allowlist of endpoints — so the
+// proxy can't be used as a free open TMDB key. Volume limiting is handled by a
+// Cloudflare WAF rate-limiting rule on /api/* (dashboard).
+
+// Only these endpoint shapes are forwarded; anything else gets 403.
+const ALLOWED_PATHS = [
+  /^trending\/[a-z]+\/[a-z]+$/,   // trending/all/week
+  /^discover\/(movie|tv)$/,
+  /^search\/multi$/,
+  /^(movie|tv)\/\d+$/,            // movie/603, tv/1396
+  /^tv\/\d+\/season\/\d+$/,       // tv/1396/season/1
+]
+
+function hostOf(value: string | null): string | null {
+  if (!value) return null
+  try { return new URL(value).host } catch { return null }
+}
 
 export async function onRequestGet(context: any): Promise<Response> {
   const { request, env, waitUntil } = context
 
   const incoming = new URL(request.url)
+
+  // Same-origin guard: the Referer/Origin host must match the host serving this
+  // function (works for the custom domain and pages.dev previews alike).
+  const requesterHost = hostOf(request.headers.get('Origin')) || hostOf(request.headers.get('Referer'))
+  if (requesterHost !== incoming.host) {
+    return new Response('Forbidden', { status: 403 })
+  }
+
   const path = incoming.pathname.replace(/^\/api\/tmdb\//, '')
   if (!path) return new Response('Not found', { status: 404 })
+
+  if (!ALLOWED_PATHS.some(re => re.test(path))) {
+    return new Response('Forbidden', { status: 403 })
+  }
 
   if (!env.TMDB_API_KEY) {
     return new Response(JSON.stringify({ error: 'TMDB_API_KEY is not configured' }), {
@@ -33,7 +64,6 @@ export async function onRequestGet(context: any): Promise<Response> {
 
   const response = new Response(upstream.body, upstream)
   response.headers.set('Cache-Control', 'public, max-age=3600')
-  response.headers.set('Access-Control-Allow-Origin', '*')
   response.headers.delete('set-cookie')
 
   if (upstream.ok) waitUntil(cache.put(cacheKey, response.clone()))
