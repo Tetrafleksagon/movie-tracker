@@ -1,25 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 
-export type Profile = { id: string; display_name: string | null; avatar_url: string | null }
+export type Profile = { id: string; display_name: string | null; avatar_url: string | null; is_premium: boolean }
 
 export async function fetchMyProfile(): Promise<Profile | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url')
+    .select('id, display_name, avatar_url, is_premium')
     .eq('id', user.id)
     .maybeSingle()
   if (error) console.error('Profile fetch error:', error)
-  return data ?? { id: user.id, display_name: null, avatar_url: null }
+  return data ?? { id: user.id, display_name: null, avatar_url: null, is_premium: false }
 }
 
 // Public read of any user's profile (used by share pages).
 export async function fetchProfileById(id: string): Promise<Profile | null> {
   const { data } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url')
+    .select('id, display_name, avatar_url, is_premium')
     .eq('id', id)
     .maybeSingle()
   return data ?? null

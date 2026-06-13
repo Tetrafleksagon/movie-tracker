@@ -18,11 +18,15 @@ export function SharedLibrary() {
   const [notFound, setNotFound] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [ownerName, setOwnerName] = useState<string | null>(null)
+  const [ownerPremium, setOwnerPremium] = useState(false)
 
   useEffect(() => {
     if (userId) {
       fetchSharedLibrary(userId)
-      fetchProfileById(userId).then(p => setOwnerName(p?.display_name?.trim() || null))
+      fetchProfileById(userId).then(p => {
+        setOwnerName(p?.display_name?.trim() || null)
+        setOwnerPremium(!!p?.is_premium)
+      })
     }
   }, [userId])
 
@@ -76,12 +80,17 @@ export function SharedLibrary() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          {ownerName && <Avatar name={ownerName} size={40} />}
-          <h2 className="text-xl font-bold text-gray-200 flex-1 min-w-0 truncate">
+          {ownerName && <Avatar name={ownerName} size={40} premium={ownerPremium} />}
+          <h2 className="text-xl font-bold text-gray-200 min-w-0 truncate">
             {ownerName ? t('public_library.title_named', { name: ownerName }) : t('public_library.title')}
           </h2>
+          {ownerPremium && (
+            <span className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-2 py-0.5">
+              ★ {t('premium.badge')}
+            </span>
+          )}
           {!loading && !notFound && (
-            <span className="text-sm text-gray-500 flex-shrink-0">{items.length} {t('public_library.items')}</span>
+            <span className="text-sm text-gray-500 flex-shrink-0 ml-auto">{items.length} {t('public_library.items')}</span>
           )}
         </div>
 
