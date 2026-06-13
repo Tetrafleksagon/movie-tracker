@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../lib/supabase'
+import { useMyProfile, displayNameOf } from '../lib/profile'
+import { useSubscription } from '../lib/subscription'
+import { Avatar } from './Avatar'
 
 type Props = {
   userId: string
@@ -8,8 +12,16 @@ type Props = {
 
 export function ShareModal({ userId, onClose }: Props) {
   const { t } = useTranslation()
+  const { profile } = useMyProfile()
+  const { isPremium } = useSubscription()
+  const [email, setEmail] = useState('')
   const [copied, setCopied] = useState(false)
   const shareUrl = `${window.location.origin}/share/${userId}`
+  const shownName = displayNameOf(profile, email)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
+  }, [])
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(shareUrl)
@@ -36,6 +48,22 @@ export function ShareModal({ userId, onClose }: Props) {
       >
         <h2 className="text-lg font-bold text-white text-center mb-1">{t('share.title')}</h2>
         <p className="text-sm text-gray-400 text-center mb-4">{t('share.description')}</p>
+
+        {/* Identity preview — how the shared page is presented */}
+        <div className="flex items-center gap-3 bg-gray-700/40 border border-gray-700 rounded-lg p-3 mb-4">
+          <Avatar name={shownName} size={40} premium={isPremium} />
+          <div className="min-w-0">
+            <p className="font-semibold text-white truncate flex items-center gap-2">
+              {shownName}
+              {isPremium && (
+                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-1.5 py-0.5">
+                  ★ {t('premium.badge')}
+                </span>
+              )}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{t('public_library.title_named', { name: shownName })}</p>
+          </div>
+        </div>
 
         <div className="bg-gray-700/60 border border-gray-600 rounded-lg px-3 py-2.5 text-sm text-gray-200 mb-4 break-all select-all cursor-text">
           {shareUrl}
