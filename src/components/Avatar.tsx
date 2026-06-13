@@ -14,23 +14,44 @@ function colorFor(s: string): string {
 }
 
 // Generated initials avatar — a colored circle derived deterministically from
-// the name. (avatar_url image upload is a future enhancement.)
-export function Avatar({ name, size = 28 }: { name: string; size?: number }) {
+// the name. Premium owners get a gold ring + star badge.
+export function Avatar({ name, size = 28, premium = false }: { name: string; size?: number; premium?: boolean }) {
   const key = name || '?'
+  const badge = Math.max(12, Math.round(size * 0.42))
   return (
-    <div
-      className="flex items-center justify-center font-semibold text-white select-none flex-shrink-0"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        backgroundColor: colorFor(key),
-        fontSize: Math.round(size * 0.4),
-        lineHeight: 1,
-      }}
-      aria-hidden="true"
-    >
-      {initials(key)}
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <div
+        className="flex items-center justify-center font-semibold text-white select-none"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          backgroundColor: colorFor(key),
+          fontSize: Math.round(size * 0.4),
+          lineHeight: 1,
+          boxShadow: premium ? '0 0 0 2px #f59e0b' : undefined,
+        }}
+        aria-hidden="true"
+      >
+        {initials(key)}
+      </div>
+      {premium && (
+        <span
+          className="absolute flex items-center justify-center rounded-full text-white"
+          style={{
+            right: -3,
+            bottom: -3,
+            width: badge,
+            height: badge,
+            fontSize: Math.round(badge * 0.6),
+            backgroundColor: '#f59e0b',
+            boxShadow: '0 0 0 2px #1f2937',
+          }}
+          aria-label="Premium"
+        >
+          ★
+        </span>
+      )}
     </div>
   )
 }

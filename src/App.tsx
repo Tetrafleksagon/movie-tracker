@@ -12,6 +12,7 @@ import { ScrollToTop } from './components/ScrollToTop'
 import { Avatar } from './components/Avatar'
 import { supabase } from './lib/supabase'
 import { useMyProfile, displayNameOf } from './lib/profile'
+import { useSubscription } from './lib/subscription'
 import { APP_VERSION } from './lib/version'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
@@ -20,6 +21,7 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
   const { t } = useTranslation()
   const location = useLocation()
   const { profile } = useMyProfile()
+  const { isPremium } = useSubscription()
   const isActive = (path: string) => location.pathname === path
   const shownName = displayNameOf(profile, user?.email)
 
@@ -98,7 +100,7 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
                   title={shownName}
                   className={`flex items-center gap-2 transition ${isActive('/profile') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
                 >
-                  <Avatar name={shownName} size={28} />
+                  <Avatar name={shownName} size={28} premium={isPremium} />
                   <span className="hidden sm:inline text-sm font-medium text-gray-300 max-w-[120px] truncate">{shownName}</span>
                 </Link>
                 <button
