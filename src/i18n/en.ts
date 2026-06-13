@@ -103,7 +103,8 @@ export default {
     random_title: "Random Movie",
     random_btn: "🎲 Pick Random",
     random_label: "Random Pick",
-    random_hint: "Click the button to get a random movie suggestion"
+    random_hint: "Click the button to get a random movie suggestion",
+    guest_limit: "Create a free account to keep exploring random picks"
   },
   genres: {
     action: "Action",

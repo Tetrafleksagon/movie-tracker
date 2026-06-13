@@ -1,11 +1,28 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
 import { WelcomeTip } from './WelcomeTip'
 import { fetchLibraryIds } from '../lib/library'
+
+// Soft daily limit on "random pick" for guests — a nudge to register.
+const GUEST_RANDOM_LIMIT = 15
+const GUEST_RANDOM_KEY = 'mt_guest_random_limit'
+const today = () => new Date().toISOString().slice(0, 10)
+function guestRandomUsed(): number {
+  try {
+    const v = JSON.parse(localStorage.getItem(GUEST_RANDOM_KEY) || '{}')
+    return v.date === today() ? (v.count || 0) : 0
+  } catch { return 0 }
+}
+function bumpGuestRandom(): number {
+  const count = guestRandomUsed() + 1
+  try { localStorage.setItem(GUEST_RANDOM_KEY, JSON.stringify({ date: today(), count })) } catch {}
+  return count
+}
 
 const GENRE_CONFIGS = [
   { id: 28,  key: 'genres.action' },
@@ -132,6 +149,8 @@ export function Search() {
   // Home state
   const [randomPick, setRandomPick] = useState<any | null>(null)
   const [randomLoading, setRandomLoading] = useState(false)
+  const [isGuest, setIsGuest] = useState(true)
+  const [guestLimited, setGuestLimited] = useState(false)
 
   // Shared
   const [itemStatuses, setItemStatuses] = useState<Record<number, string>>({})
@@ -153,6 +172,13 @@ export function Search() {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Track auth state for the guest random-pick limit.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setIsGuest(!data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setIsGuest(!session?.user))
+    return () => subscription.unsubscribe()
   }, [])
 
   // Reset the random pick when the language changes (its texts are stale).
@@ -200,6 +226,11 @@ export function Search() {
   // session), then randomized on the client — so repeated "random" clicks cost
   // no TMDB calls and can't be used to hammer the proxy.
   const pickRandom = async () => {
+    // Guests get a limited number of random picks per day, then a register CTA.
+    if (isGuest && guestRandomUsed() >= GUEST_RANDOM_LIMIT) {
+      setGuestLimited(true)
+      return
+    }
     setRandomLoading(true)
     try {
       const pool: any[] = await queryClient.fetchQuery({
@@ -215,6 +246,7 @@ export function Search() {
       const candidates = pool.filter(m => m.id !== randomPick?.id && notInLibrary(m))
       if (candidates.length > 0) {
         setRandomPick(candidates[Math.floor(Math.random() * candidates.length)])
+        if (isGuest) bumpGuestRandom()
       }
     } catch (e) {
       console.error('Random pick error:', e)
@@ -485,7 +517,16 @@ export function Search() {
               </button>
             </div>
 
-            {randomPick ? (
+            {guestLimited ? (
+              <div className="text-center py-7 px-4 border border-dashed border-indigo-500/40 rounded-xl bg-indigo-900/10">
+                <div className="text-3xl mb-2">🎬</div>
+                <p className="text-gray-200 font-medium mb-4 max-w-sm mx-auto leading-relaxed">{t('search.guest_limit')}</p>
+                <div className="flex items-center justify-center gap-2">
+                  <Link to="/library" className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition">{t('auth.sign_in')}</Link>
+                  <Link to="/library" className="px-5 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition">{t('auth.sign_up')}</Link>
+                </div>
+              </div>
+            ) : randomPick ? (
               <div
                 className="relative rounded-xl overflow-hidden border border-indigo-500/60 shadow-xl cursor-pointer"
                 onClick={() => setSelectedItem(randomPick)}
