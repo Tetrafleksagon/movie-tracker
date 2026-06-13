@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
 import { WelcomeTip } from './WelcomeTip'
+import { fetchLibraryIds } from '../lib/library'
 
 const GENRE_CONFIGS = [
   { id: 28,  key: 'genres.action' },
@@ -185,6 +186,12 @@ export function Search() {
   const trending: any[] = homeData?.trending ?? []
   const genres: GenreRow[] = homeData?.genres ?? []
 
+  // Titles already in the user's library are excluded from recommendations and
+  // the random pool (signed-out users see everything).
+  const { data: libraryIds } = useQuery({ queryKey: ['library-ids'], queryFn: fetchLibraryIds })
+  const libSet = libraryIds instanceof Set ? libraryIds : null
+  const notInLibrary = (item: any) => !(libSet && libSet.has(item.id))
+
   // A pool of popular movies fetched once per language (cached forever for the
   // session), then randomized on the client — so repeated "random" clicks cost
   // no TMDB calls and can't be used to hammer the proxy.
@@ -201,7 +208,7 @@ export function Search() {
           return pages.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
         },
       })
-      const candidates = pool.filter(m => m.id !== randomPick?.id)
+      const candidates = pool.filter(m => m.id !== randomPick?.id && notInLibrary(m))
       if (candidates.length > 0) {
         setRandomPick(candidates[Math.floor(Math.random() * candidates.length)])
       }
@@ -257,6 +264,7 @@ export function Search() {
       showToast('✓ ' + title)
       // Library/Stats caches are stale after the upsert.
       queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['library-ids'] })
       queryClient.invalidateQueries({ queryKey: ['stats'] })
     }
   }, [showToast, t, queryClient])
@@ -534,7 +542,7 @@ export function Search() {
               <p className="text-sm text-gray-500">{t('common.loading')}</p>
             ) : (
               <ScrollRow>
-                {trending.map(item => (
+                {trending.filter(notInLibrary).map(item => (
                   <CardTile
                     key={item.id}
                     item={item}
@@ -547,12 +555,15 @@ export function Search() {
             )}
           </section>
 
-          {/* Genre rows */}
-          {!homeLoading && genres.map(genre => (
+          {/* Genre rows (skip a genre once all its picks are already in the library) */}
+          {!homeLoading && genres.map(genre => {
+            const movies = genre.movies.filter(notInLibrary)
+            if (movies.length === 0) return null
+            return (
             <section key={genre.id}>
               <h2 className="text-lg font-bold text-gray-100 mb-3">{t(genre.key)}</h2>
               <ScrollRow>
-                {genre.movies.map(item => (
+                {movies.map(item => (
                   <CardTile
                     key={item.id}
                     item={item}
@@ -563,7 +574,8 @@ export function Search() {
                 ))}
               </ScrollRow>
             </section>
-          ))}
+            )
+          })}
         </div>
       )}
     </main>

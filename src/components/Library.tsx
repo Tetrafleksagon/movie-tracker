@@ -129,6 +129,7 @@ export function Library() {
       queryClient.setQueriesData({ queryKey: ['library'] }, (old: any[] | undefined) =>
         old?.filter(i => i.tmdb_id !== tmdbId)
       )
+      queryClient.invalidateQueries({ queryKey: ['library-ids'] })
       queryClient.invalidateQueries({ queryKey: ['stats'] })
     }
   }

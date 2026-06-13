@@ -93,6 +93,7 @@ export function MediaCard({ item }: { item: any }) {
         setStatus(newStatus); setUpdatedAt(now); setHistory(updatedHistory)
         // Library/Stats caches now hold stale rows — refetch them next time.
         queryClient.invalidateQueries({ queryKey: ['library'] })
+        queryClient.invalidateQueries({ queryKey: ['library-ids'] })
         queryClient.invalidateQueries({ queryKey: ['stats'] })
       }
       setLoading(false)

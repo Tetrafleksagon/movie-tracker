@@ -172,6 +172,7 @@ function App() {
         // account never sees the previous one's library/stats.
         if (prev?.id !== next?.id) {
           queryClient.removeQueries({ queryKey: ['library'] })
+          queryClient.removeQueries({ queryKey: ['library-ids'] })
           queryClient.removeQueries({ queryKey: ['stats'] })
           queryClient.removeQueries({ queryKey: ['episodes'] })
           queryClient.removeQueries({ queryKey: ['lists'] })
