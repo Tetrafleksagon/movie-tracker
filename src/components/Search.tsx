@@ -164,22 +164,26 @@ export function Search() {
   const { data: homeData, isLoading: homeLoading } = useQuery({
     queryKey: ['home', tmdbLang],
     queryFn: async () => {
-      const [trendingRes, ...genreResponses] = await Promise.all([
-        fetch(`/api/tmdb/trending/all/week?language=${tmdbLang}`),
-        ...GENRE_CONFIGS.map(g =>
-          fetch(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=1&language=${tmdbLang}`)
-        ),
+      // Two pages per row so there's still plenty left after excluding the
+      // user's library. Edge-cached, so the extra calls hit TMDB at most once
+      // per hour across all visitors.
+      const [trendingPages, genreData] = await Promise.all([
+        Promise.all([1, 2].map(p =>
+          fetch(`/api/tmdb/trending/all/week?language=${tmdbLang}&page=${p}`).then(r => r.json())
+        )),
+        Promise.all(GENRE_CONFIGS.map(async g => {
+          const pages = await Promise.all([1, 2].map(p =>
+            fetch(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=${p}&language=${tmdbLang}`).then(r => r.json())
+          ))
+          return { ...g, movies: pages.flatMap((d: any) => d.results || []).slice(0, 20) }
+        })),
       ])
-      const trendingData = await trendingRes.json()
-      const genreData = await Promise.all(genreResponses.map(r => r.json()))
       return {
-        trending: (trendingData.results || [])
+        trending: trendingPages
+          .flatMap((d: any) => d.results || [])
           .filter((i: any) => i.media_type !== 'person')
-          .slice(0, 14),
-        genres: GENRE_CONFIGS.map((g, i) => ({
-          ...g,
-          movies: (genreData[i].results || []).slice(0, 10),
-        })) as GenreRow[],
+          .slice(0, 20),
+        genres: genreData as GenreRow[],
       }
     },
   })
@@ -202,7 +206,7 @@ export function Search() {
         queryKey: ['random-pool', tmdbLang],
         staleTime: Infinity,
         queryFn: async () => {
-          const pages = await Promise.all([1, 2, 3].map(p =>
+          const pages = await Promise.all([1, 2, 3, 4, 5, 6, 7, 8].map(p =>
             fetch(`/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${p}`).then(r => r.json())
           ))
           return pages.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
