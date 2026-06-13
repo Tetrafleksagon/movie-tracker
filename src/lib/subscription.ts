@@ -10,6 +10,10 @@ export type Subscription = {
   current_period_end: string | null
 }
 
+const FREE: Subscription = { status: 'inactive', plan: null, current_period_end: null }
+
+// Returns null only when signed out; a signed-in user without a row (or on
+// error) is treated as a free user (default inactive object).
 export async function fetchSubscription(): Promise<Subscription | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -18,8 +22,8 @@ export async function fetchSubscription(): Promise<Subscription | null> {
     .select('status, plan, current_period_end')
     .eq('user_id', user.id)
     .maybeSingle()
-  if (error) { console.error('Subscription fetch error:', error); return null }
-  return data
+  if (error) { console.error('Subscription fetch error:', error); return FREE }
+  return data ?? FREE
 }
 
 // "Premium active" = status active and not past its period end (if any).

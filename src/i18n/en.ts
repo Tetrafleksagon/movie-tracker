@@ -45,6 +45,11 @@ export default {
     trailer: "Trailer",
     cast: "Cast"
   },
+  premium: {
+    badge: "Premium",
+    lists_title: "Lists are a premium feature",
+    lists_desc: "Creating and managing your own lists is available with Premium. Subscriptions are coming soon."
+  },
   lists: {
     title: "My lists",
     create_placeholder: "New list name…",

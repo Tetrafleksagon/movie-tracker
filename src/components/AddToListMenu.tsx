@@ -5,12 +5,14 @@ import {
   fetchLists, createList, fetchItemListIds, addToList, removeFromList,
   type ListMedia,
 } from '../lib/lists'
+import { useSubscription } from '../lib/subscription'
 
 // Compact "add to list" control shown in the movie modal: a toggle that opens
 // a panel with one checkbox per list plus inline "create list".
 export function AddToListMenu({ item }: { item: ListMedia }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { isPremium, subscription } = useSubscription()
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const panelRef = useRef<HTMLDivElement>(null)
@@ -21,14 +23,35 @@ export function AddToListMenu({ item }: { item: ListMedia }) {
     if (open) panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [open])
 
-  const { data: lists } = useQuery({ queryKey: ['lists'], queryFn: fetchLists })
+  const { data: lists } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: isPremium })
   const { data: memberIds } = useQuery({
     queryKey: ['item-lists', item.id],
     queryFn: () => fetchItemListIds(item.id),
+    enabled: isPremium,
   })
 
-  // null = signed out → hide entirely.
-  if (lists === null || lists === undefined) return null
+  // Signed out → hide entirely. Lists are premium → non-premium gets an upsell.
+  if (subscription === null) return null
+  if (!isPremium) {
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="w-full py-2.5 px-3 rounded-lg text-sm font-medium bg-gray-700/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center gap-2"
+        >
+          📑 {t('lists.add_to_list')} 🔒
+        </button>
+        {open && (
+          <div className="mt-2 bg-gray-900/60 border border-amber-500/30 rounded-lg p-3 text-center">
+            <span className="inline-block text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full px-2.5 py-0.5 mb-2">
+              {t('premium.badge')}
+            </span>
+            <p className="text-xs text-gray-400 leading-relaxed">{t('premium.lists_desc')}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const member = new Set(memberIds || [])
 

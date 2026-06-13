@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getPosterUrl, localizeMediaItems } from '../lib/tmdb'
+import { useSubscription } from '../lib/subscription'
 import { MovieModal } from './MovieModal'
 import { EmptyState } from './EmptyState'
+import { PremiumNotice } from './PremiumNotice'
 import {
   fetchLists, createList, deleteList, fetchListItems, removeFromList,
 } from '../lib/lists'
@@ -22,7 +24,8 @@ export function Lists() {
     return next
   })
 
-  const { data: lists, isLoading } = useQuery({ queryKey: ['lists'], queryFn: fetchLists })
+  const { isPremium, loading: subLoading } = useSubscription()
+  const { data: lists, isLoading } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: isPremium })
 
   const handleCreate = async () => {
     const name = newName.trim()
@@ -41,8 +44,18 @@ export function Lists() {
     queryClient.invalidateQueries({ queryKey: ['lists'] })
   }
 
-  if (isLoading) {
+  if (subLoading || (isPremium && isLoading)) {
     return <p className="text-center text-gray-400 py-16 animate-pulse">{t('common.loading')}</p>
+  }
+
+  // Lists are a premium feature — non-premium users get an upsell.
+  if (!isPremium) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+        <h1 className="text-xl font-bold text-gray-100">{t('lists.title')}</h1>
+        <PremiumNotice title={t('premium.lists_title')} desc={t('premium.lists_desc')} />
+      </main>
+    )
   }
 
   return (

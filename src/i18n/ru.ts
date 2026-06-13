@@ -45,6 +45,11 @@ export default {
     trailer: "Трейлер",
     cast: "В ролях"
   },
+  premium: {
+    badge: "Premium",
+    lists_title: "Списки — premium-функция",
+    lists_desc: "Создание и ведение своих списков доступно в Premium. Подписку можно будет оформить в ближайшее время."
+  },
   lists: {
     title: "Мои списки",
     create_placeholder: "Название нового списка…",
