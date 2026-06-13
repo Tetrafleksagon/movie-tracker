@@ -192,7 +192,7 @@ export function Library() {
         </div>
         {/* Search + Sort */}
         <div className="flex items-center gap-2 mt-2">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <input
               type="text"
               placeholder={t('library.search_placeholder')}
