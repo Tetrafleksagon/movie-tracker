@@ -254,7 +254,7 @@ export function Library() {
 
           {/* Пагинация */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 pt-6">
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-6">
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
