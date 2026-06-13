@@ -36,9 +36,19 @@ export function Library() {
   const [currentIndex, setCurrentIndex] = useState(1)
   const [userId, setUserId] = useState<string | null>(null)
   const [showShare, setShowShare] = useState(false)
+  const [headerOffset, setHeaderOffset] = useState(56)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const filters = ['all', 'planned', 'watching', 'watched', 'dropped'] as const
+
+  // Pin the sticky filter bar exactly below the (variable-height) site header,
+  // re-measuring on resize so it never overlaps the nav.
+  useEffect(() => {
+    const measure = () => setHeaderOffset(document.querySelector('header')?.offsetHeight ?? 56)
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   // Library rows, cached per language; localization cache keeps switches fast.
   const { data: items = [], isLoading: loading } = useQuery({
@@ -152,7 +162,7 @@ export function Library() {
     <main className="max-w-6xl mx-auto px-4 pt-0 pb-6">
 
       {/* Sticky: фильтры + размер страницы + счётчик */}
-      <div className="sticky top-14 sm:top-[73px] z-40 bg-gray-900 py-4 -mx-4 px-4">
+      <div className="sticky z-40 bg-gray-900 py-4 -mx-4 px-4" style={{ top: headerOffset }}>
         <div className="flex items-center gap-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
             {filters.map(filter => (
