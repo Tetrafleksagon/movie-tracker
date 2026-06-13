@@ -9,6 +9,20 @@ import { EmptyState } from '../components/EmptyState'
 
 const PAGE_SIZES = [5, 10, 15] as const
 
+// Compact page list: always first/last + current ±1, with ellipses between.
+// e.g. 1 … 5 6 7 … 20. Short lists (≤7) are shown in full.
+function pageRange(current: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const items: (number | '…')[] = [1]
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  if (start > 2) items.push('…')
+  for (let p = start; p <= end; p++) items.push(p)
+  if (end < total - 1) items.push('…')
+  items.push(total)
+  return items
+}
+
 export function Library() {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
@@ -262,18 +276,22 @@ export function Library() {
               >
                 ←
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => goToPage(page)}
-                  className={`w-8 h-8 rounded text-sm font-medium transition ${
-                    page === currentPage
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  {page}
-                </button>
+              {pageRange(currentPage, totalPages).map((page, i) => (
+                page === '…' ? (
+                  <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-gray-600 text-sm select-none">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`w-8 h-8 rounded text-sm font-medium transition ${
+                      page === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
               ))}
               <button
                 onClick={() => goToPage(currentPage + 1)}
