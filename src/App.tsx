@@ -175,6 +175,7 @@ function App() {
           queryClient.removeQueries({ queryKey: ['library-ids'] })
           queryClient.removeQueries({ queryKey: ['stats'] })
           queryClient.removeQueries({ queryKey: ['episodes'] })
+          queryClient.removeQueries({ queryKey: ['subscription'] })
           queryClient.removeQueries({ queryKey: ['lists'] })
           queryClient.removeQueries({ queryKey: ['list-items'] })
           queryClient.removeQueries({ queryKey: ['list-counts'] })
