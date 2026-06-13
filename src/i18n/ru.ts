@@ -141,8 +141,24 @@ export default {
     close: "Закрыть",
     share: "✈️ Поделиться"
   },
+  profile: {
+    title: "Профиль",
+    display_name: "Отображаемое имя",
+    display_name_placeholder: "Как вас зовут?",
+    save: "Сохранить",
+    saved: "Сохранено",
+    email: "Email",
+    password: "Новый пароль",
+    password_confirm: "Повторите пароль",
+    password_save: "Сменить пароль",
+    password_changed: "Пароль изменён",
+    password_mismatch: "Пароли не совпадают",
+    password_short: "Минимум 6 символов",
+    error: "Ошибка"
+  },
   public_library: {
     title: "Публичная библиотека",
+    title_named: "Библиотека {{name}}",
     loading: "Загрузка...",
     error: "Не удалось загрузить библиотеку",
     empty: "Библиотека пуста",

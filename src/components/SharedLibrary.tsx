@@ -5,7 +5,9 @@ import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
 import { APP_VERSION } from '../lib/version'
 import { RATING_COLORS, getStatusColor } from '../lib/status'
+import { fetchProfileById } from '../lib/profile'
 import { MovieModal } from './MovieModal'
+import { Avatar } from './Avatar'
 
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
@@ -15,9 +17,13 @@ export function SharedLibrary() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [ownerName, setOwnerName] = useState<string | null>(null)
 
   useEffect(() => {
-    if (userId) fetchSharedLibrary(userId)
+    if (userId) {
+      fetchSharedLibrary(userId)
+      fetchProfileById(userId).then(p => setOwnerName(p?.display_name?.trim() || null))
+    }
   }, [userId])
 
   const fetchSharedLibrary = async (uid: string) => {
@@ -69,10 +75,13 @@ export function SharedLibrary() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-200">{t('public_library.title')}</h2>
+        <div className="flex items-center gap-3 mb-6">
+          {ownerName && <Avatar name={ownerName} size={40} />}
+          <h2 className="text-xl font-bold text-gray-200 flex-1 min-w-0 truncate">
+            {ownerName ? t('public_library.title_named', { name: ownerName }) : t('public_library.title')}
+          </h2>
           {!loading && !notFound && (
-            <span className="text-sm text-gray-500">{items.length} {t('public_library.items')}</span>
+            <span className="text-sm text-gray-500 flex-shrink-0">{items.length} {t('public_library.items')}</span>
           )}
         </div>
 

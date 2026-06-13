@@ -5,10 +5,13 @@ import { Search } from './components/Search'
 import { Library } from './components/Library'
 import { Stats } from './components/Stats'
 import { Lists } from './components/Lists'
+import { Profile } from './components/Profile'
 import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
+import { Avatar } from './components/Avatar'
 import { supabase } from './lib/supabase'
+import { useMyProfile, displayNameOf } from './lib/profile'
 import { APP_VERSION } from './lib/version'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
@@ -16,7 +19,9 @@ import { useQueryClient } from '@tanstack/react-query'
 function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
   const location = useLocation()
+  const { profile } = useMyProfile()
   const isActive = (path: string) => location.pathname === path
+  const shownName = displayNameOf(profile, user?.email)
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-3 sm:p-4 sticky top-0 z-50">
@@ -87,12 +92,22 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
           <LanguageSwitcher />
           {!authLoading && (
             user ? (
-              <button
-                onClick={() => supabase.auth.signOut()}
-                className="text-sm text-gray-300 hover:text-white transition"
-              >
-                {t('header.logout')}
-              </button>
+              <>
+                <Link
+                  to="/profile"
+                  title={shownName}
+                  className={`flex items-center gap-2 transition ${isActive('/profile') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+                >
+                  <Avatar name={shownName} size={28} />
+                  <span className="hidden sm:inline text-sm font-medium text-gray-300 max-w-[120px] truncate">{shownName}</span>
+                </Link>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="text-sm text-gray-300 hover:text-white transition"
+                >
+                  {t('header.logout')}
+                </button>
+              </>
             ) : (
               <Link
                 to="/library"
@@ -144,6 +159,16 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
                 : <Auth />
           }
         />
+        <Route
+          path="/profile"
+          element={
+            authLoading
+              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
+              : user
+                ? <Profile />
+                : <Auth />
+          }
+        />
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         Copyright Fleksagon {new Date().getFullYear()}
@@ -176,6 +201,7 @@ function App() {
           queryClient.removeQueries({ queryKey: ['stats'] })
           queryClient.removeQueries({ queryKey: ['episodes'] })
           queryClient.removeQueries({ queryKey: ['subscription'] })
+          queryClient.removeQueries({ queryKey: ['profile'] })
           queryClient.removeQueries({ queryKey: ['lists'] })
           queryClient.removeQueries({ queryKey: ['list-items'] })
           queryClient.removeQueries({ queryKey: ['list-counts'] })

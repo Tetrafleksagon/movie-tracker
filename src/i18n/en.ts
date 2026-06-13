@@ -141,8 +141,24 @@ export default {
     close: "Close",
     share: "✈️ Share"
   },
+  profile: {
+    title: "Profile",
+    display_name: "Display name",
+    display_name_placeholder: "What's your name?",
+    save: "Save",
+    saved: "Saved",
+    email: "Email",
+    password: "New password",
+    password_confirm: "Confirm password",
+    password_save: "Change password",
+    password_changed: "Password changed",
+    password_mismatch: "Passwords don't match",
+    password_short: "At least 6 characters",
+    error: "Error"
+  },
   public_library: {
     title: "Public Library",
+    title_named: "{{name}}'s library",
     loading: "Loading...",
     error: "Failed to load library",
     empty: "Library is empty",
