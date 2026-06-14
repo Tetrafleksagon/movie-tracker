@@ -64,6 +64,28 @@ export default {
     new_list: "New list…",
     empty_hint: "Create a list below"
   },
+  about: {
+    nav: "About",
+    title: "About Movie Tracker",
+    intro: "Movie Tracker keeps every film and series in one place — search, save, rate and track your progress. Available in English and Russian, and installable as an app on your phone.",
+    features_title: "Features",
+    features: [
+      { icon: "🔎", title: "Search", desc: "Find any movie or TV show, powered by TMDB." },
+      { icon: "🗂️", title: "Your library", desc: "Track titles with statuses: planned, watching, watched, dropped." },
+      { icon: "⭐", title: "Ratings & history", desc: "Rate anything 1–10 and see a history of status changes." },
+      { icon: "📺", title: "Episode tracking", desc: "Mark seasons and episodes for shows, with progress." },
+      { icon: "🎬", title: "Rich details", desc: "Trailers, cast and synopsis — right in the card." },
+      { icon: "🎲", title: "Discover", desc: "Trending, genres and a random pick when you can't choose." },
+      { icon: "📊", title: "Statistics", desc: "A dashboard of your watching habits and ratings." },
+      { icon: "🔗", title: "Share", desc: "Share your library with a link." }
+    ],
+    premium_title: "Premium",
+    premium_intro: "Premium unlocks extra ways to organize your collection.",
+    premium_features: [
+      { icon: "📑", title: "Custom lists", desc: "Create your own curated lists and add any title to them." }
+    ],
+    premium_note: "More premium features are on the way (custom avatar, shareable lists). Subscriptions are coming soon.",
+  },
   errors: {
     title: "Something went wrong",
     message: "An unexpected error occurred. Please try reloading the page.",

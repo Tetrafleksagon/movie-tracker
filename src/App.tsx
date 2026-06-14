@@ -6,6 +6,7 @@ import { Library } from './components/Library'
 import { Stats } from './components/Stats'
 import { Lists } from './components/Lists'
 import { Profile } from './components/Profile'
+import { About } from './components/About'
 import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
@@ -126,11 +127,13 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
 }
 
 function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) {
+  const { t } = useTranslation()
   return (
     <div className="min-h-screen bg-gray-900">
       <Navigation user={user} authLoading={authLoading} />
       <Routes>
         <Route path="/" element={<Search />} />
+        <Route path="/about" element={<About />} />
         <Route
           path="/library"
           element={
@@ -173,7 +176,8 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
         />
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
-        Copyright Fleksagon {new Date().getFullYear()}
+        <Link to="/about" className="text-gray-400 hover:text-white transition">{t('about.nav')}</Link>
+        <span className="block mt-1">Copyright Fleksagon {new Date().getFullYear()}</span>
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
       <ScrollToTop />
