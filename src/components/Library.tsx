@@ -163,26 +163,26 @@ export function Library() {
 
       {/* Sticky: фильтры + размер страницы + счётчик */}
       <div className="sticky z-40 bg-gray-900 py-4 -mx-4 px-4" style={{ top: headerOffset }}>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Filters wrap to multiple lines on narrow screens — no horizontal swipe */}
-          <div className="flex flex-wrap gap-2">
-            {filters.map(filter => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-                  activeFilter === filter
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                {filter === 'all' ? t('filters.all') : t(`filters.${filter}`)}
-              </button>
-            ))}
-          </div>
+        {/* Filters — centered, wrap to multiple lines on narrow screens (no swipe) */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {filters.map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+                activeFilter === filter
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              {filter === 'all' ? t('filters.all') : t(`filters.${filter}`)}
+            </button>
+          ))}
+        </div>
 
-          {/* Controls (page size / counter / share) — pushed right, wrap below on small screens */}
-          <div className="flex items-center gap-2 ml-auto">
+        {/* Controls: page size + counter on the left, Share on the right */}
+        <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2">
             {!loading && filteredItems.length > 0 && (
               <div className="flex items-center gap-1 flex-shrink-0">
                 {PAGE_SIZES.map(size => (
@@ -200,22 +200,21 @@ export function Library() {
                 ))}
               </div>
             )}
-
             {!loading && paginatedItems.length > 0 && (
               <span className="text-xs text-gray-500 flex-shrink-0 tabular-nums">
                 {currentIndex}/{paginatedItems.length}
               </span>
             )}
-            {userId && (
-              <button
-                onClick={() => setShowShare(true)}
-                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition"
-                title={t('share.title')}
-              >
-                🔗 {t('share.button')}
-              </button>
-            )}
           </div>
+          {userId && (
+            <button
+              onClick={() => setShowShare(true)}
+              className="flex-shrink-0 ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition"
+              title={t('share.title')}
+            >
+              🔗 {t('share.button')}
+            </button>
+          )}
         </div>
         {/* Search + Sort */}
         <div className="flex items-center gap-2 mt-2">
