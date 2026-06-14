@@ -1,44 +1,30 @@
 import { useTranslation } from 'react-i18next'
 
+const LANGS = ['en', 'ru'] as const
+
 export const LanguageSwitcher = () => {
   const { i18n } = useTranslation()
+  const lang = i18n.language === 'ru' ? 'ru' : 'en'
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)
     localStorage.setItem('language', lng)
   }
 
+  // Single oval segmented control.
   return (
-    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: '12px' }}>
-      <button
-        onClick={() => changeLanguage('en')}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: i18n.language === 'en' ? '#60a5fa' : '#6b7280',
-          cursor: 'pointer',
-          fontWeight: i18n.language === 'en' ? 'bold' : 'normal',
-          fontSize: '12px',
-          padding: '2px 6px',
-        }}
-      >
-        EN
-      </button>
-      <span style={{ color: '#475569', fontSize: '12px' }}>|</span>
-      <button
-        onClick={() => changeLanguage('ru')}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: i18n.language === 'ru' ? '#60a5fa' : '#6b7280',
-          cursor: 'pointer',
-          fontWeight: i18n.language === 'ru' ? 'bold' : 'normal',
-          fontSize: '12px',
-          padding: '2px 6px',
-        }}
-      >
-        RU
-      </button>
+    <div className="inline-flex items-center rounded-full bg-gray-800 border border-gray-700 p-0.5 text-xs font-medium">
+      {LANGS.map(l => (
+        <button
+          key={l}
+          onClick={() => changeLanguage(l)}
+          className={`px-2.5 py-1 rounded-full transition ${
+            lang === l ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          {l.toUpperCase()}
+        </button>
+      ))}
     </div>
   )
 }
