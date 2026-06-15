@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next'
 
 import en from './en'
 import ru from './ru'
+import uk from './uk'
 
 // ✅ Читаем сохранённый язык из localStorage, иначе 'en'
 const savedLang = typeof window !== 'undefined' 
@@ -13,7 +14,8 @@ const savedLang = typeof window !== 'undefined'
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
-    ru: { translation: ru }
+    ru: { translation: ru },
+    uk: { translation: uk }
   },
   lng: savedLang || 'en',
   fallbackLng: 'en',

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getPosterUrl, localizeMediaItems } from '../lib/tmdb'
+import { getPosterUrl, localizeMediaItems, tmdbLangTag } from '../lib/tmdb'
 import { useSubscription } from '../lib/subscription'
 import { MovieModal } from './MovieModal'
 import { EmptyState } from './EmptyState'
@@ -12,7 +12,7 @@ import {
 
 export function Lists() {
   const { t, i18n } = useTranslation()
-  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const tmdbLang = tmdbLangTag(i18n.language)
   const queryClient = useQueryClient()
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
   const [newName, setNewName] = useState('')

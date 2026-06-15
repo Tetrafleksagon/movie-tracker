@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { localizeMediaItems } from '../lib/tmdb'
+import { localizeMediaItems, tmdbLangTag } from '../lib/tmdb'
 import { MediaCard } from '../components/MediaCard'
 import { ShareModal } from '../components/ShareModal'
 import { EmptyState } from '../components/EmptyState'
@@ -26,7 +26,7 @@ function pageRange(current: number, total: number): (number | '…')[] {
 export function Library() {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const tmdbLang = tmdbLangTag(i18n.language)
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')

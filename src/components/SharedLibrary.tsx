@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { getPosterUrl } from '../lib/tmdb'
+import { getPosterUrl, tmdbLangTag } from '../lib/tmdb'
 import { APP_VERSION } from '../lib/version'
 import { RATING_COLORS, getStatusColor } from '../lib/status'
 import { fetchProfileById } from '../lib/profile'
@@ -12,7 +12,7 @@ import { Avatar } from './Avatar'
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
   const { t, i18n } = useTranslation()
-  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const tmdbLang = tmdbLangTag(i18n.language)
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
