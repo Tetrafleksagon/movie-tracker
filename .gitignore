@@ -13,3 +13,6 @@ cline_mcp_settings.json
 
 # MCP agent memory data
 data/
+
+# Local-only working notes
+WORKFLOW.md
