@@ -380,7 +380,7 @@ export function Search() {
       {toast && (
         <div
           onClick={() => setToast(null)}
-          className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-lg text-sm font-medium text-white shadow-lg cursor-pointer select-none ${
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 rounded-lg text-sm font-medium text-white shadow-lg cursor-pointer select-none ${
             toast.error ? 'bg-red-600' : 'bg-green-700'
           }`}
         >
