@@ -10,6 +10,7 @@ export function Auth() {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [message, setMessage] = useState('')
+  const [showEarly, setShowEarly] = useState(false)
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,6 +22,7 @@ export function Auth() {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
         setMessage(t('auth.check_email'))
+        setShowEarly(true)
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -106,8 +108,30 @@ export function Auth() {
             </p>
           )}
         </form>
-        
+
       </div>
+
+      {showEarly && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowEarly(false)}
+        >
+          <div
+            className="relative w-full max-w-sm bg-gray-800 border border-gray-700 rounded-2xl p-6 text-center shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-5xl mb-3">🎁</div>
+            <h2 className="text-lg font-bold text-white mb-2">{t('early.title')}</h2>
+            <p className="text-sm text-gray-300 leading-relaxed mb-5">{t('early.text')}</p>
+            <button
+              onClick={() => setShowEarly(false)}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition"
+            >
+              {t('early.got_it')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

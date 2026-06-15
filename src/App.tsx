@@ -149,6 +149,14 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         <Link to="/about" className="text-gray-400 hover:text-white transition">{t('about.nav')}</Link>
+        <span className="mx-2 text-gray-600">·</span>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('support:open'))}
+          className="text-gray-400 hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-xs"
+        >
+          ❤️ {t('support.button')}
+        </button>
         <span className="block mt-1">Copyright Fleksagon {new Date().getFullYear()}</span>
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>

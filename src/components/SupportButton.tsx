@@ -12,6 +12,13 @@ export function SupportButton() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
+  // Lets other parts of the app (e.g. the footer link) open this modal.
+  useEffect(() => {
+    const onOpen = () => setOpen(true)
+    window.addEventListener('support:open', onOpen)
+    return () => window.removeEventListener('support:open', onOpen)
+  }, [])
+
   // Close on Escape + lock background scroll while the modal is open.
   useEffect(() => {
     if (!open) return

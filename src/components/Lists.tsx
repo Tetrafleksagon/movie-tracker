@@ -24,8 +24,8 @@ export function Lists() {
     return next
   })
 
-  const { isPremium, loading: subLoading } = useSubscription()
-  const { data: lists, isLoading } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: isPremium })
+  const { hasFeatures, loading: subLoading } = useSubscription()
+  const { data: lists, isLoading } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: hasFeatures })
 
   const handleCreate = async () => {
     const name = newName.trim()
@@ -44,12 +44,12 @@ export function Lists() {
     queryClient.invalidateQueries({ queryKey: ['lists'] })
   }
 
-  if (subLoading || (isPremium && isLoading)) {
+  if (subLoading || (hasFeatures && isLoading)) {
     return <p className="text-center text-gray-400 py-16 animate-pulse">{t('common.loading')}</p>
   }
 
   // Lists are a premium feature — non-premium users get an upsell.
-  if (!isPremium) {
+  if (!hasFeatures) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         <h1 className="text-xl font-bold text-gray-100">{t('lists.title')}</h1>
