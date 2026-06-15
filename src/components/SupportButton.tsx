@@ -50,7 +50,7 @@ export function SupportButton() {
             <button
               onClick={() => setOpen(false)}
               aria-label={t('support.close')}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 border border-gray-500 text-white text-xl leading-none flex items-center justify-center transition"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-700/90 hover:bg-gray-600 border border-gray-400/70 text-white text-lg leading-none flex items-center justify-center transition"
             >
               ×
             </button>
