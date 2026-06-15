@@ -12,7 +12,7 @@ import { useSubscription } from '../lib/subscription'
 export function AddToListMenu({ item }: { item: ListMedia }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { isPremium, subscription } = useSubscription()
+  const { hasFeatures, subscription } = useSubscription()
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const panelRef = useRef<HTMLDivElement>(null)
@@ -23,16 +23,16 @@ export function AddToListMenu({ item }: { item: ListMedia }) {
     if (open) panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [open])
 
-  const { data: lists } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: isPremium })
+  const { data: lists } = useQuery({ queryKey: ['lists'], queryFn: fetchLists, enabled: hasFeatures })
   const { data: memberIds } = useQuery({
     queryKey: ['item-lists', item.id],
     queryFn: () => fetchItemListIds(item.id),
-    enabled: isPremium,
+    enabled: hasFeatures,
   })
 
   // Signed out → hide entirely. Lists are premium → non-premium gets an upsell.
   if (subscription === null) return null
-  if (!isPremium) {
+  if (!hasFeatures) {
     return (
       <div className="relative">
         <button

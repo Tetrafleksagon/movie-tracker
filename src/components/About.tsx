@@ -41,6 +41,9 @@ export function About() {
           <h2 className="text-lg font-bold text-gray-100">{t('about.premium_title')}</h2>
         </div>
         <p className="text-gray-300 leading-relaxed mb-4">{t('about.premium_intro')}</p>
+        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4 text-sm text-green-200 leading-relaxed">
+          🎁 {t('about.early_access')}
+        </div>
         <div className="space-y-3">
           {premium.map((f, i) => (
             <div key={i} className="flex gap-3">

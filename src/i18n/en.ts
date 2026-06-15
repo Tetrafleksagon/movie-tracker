@@ -85,6 +85,7 @@ export default {
       { icon: "📑", title: "Custom lists", desc: "Create your own curated lists and add any title to them." }
     ],
     premium_note: "More premium features are on the way (custom avatar, shareable lists). Subscriptions are coming soon.",
+    early_access: "Joined during launch? All premium features are free for registered users until paid subscriptions arrive."
   },
   errors: {
     title: "Something went wrong",
@@ -210,5 +211,10 @@ export default {
     text: "Movie Tracker is an independent, ad-free project. If you enjoy it, please consider supporting its development — it helps cover the servers and build new features. Thank you! 💙",
     cta: "Support via Monobank",
     close: "Close"
+  },
+  early: {
+    title: "🎁 Premium is on us!",
+    text: "You joined during launch — so all premium features (your own lists and more) are free for you while we're getting started. Check your inbox to confirm your email.",
+    got_it: "Got it"
   }
 } as const
