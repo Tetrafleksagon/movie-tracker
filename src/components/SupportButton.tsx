@@ -33,7 +33,7 @@ export function SupportButton() {
         title={t('support.button')}
         aria-label={t('support.button')}
         style={{ position: 'fixed', right: '24px', bottom: '88px', zIndex: 9998 }}
-        className="w-10 h-10 rounded-full flex items-center justify-center text-xl text-white bg-gradient-to-br from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-rose-900/40 transition-colors"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white bg-gradient-to-br from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-rose-900/40 transition-colors"
       >
         <span className="leading-none" style={beat}>❤️</span>
       </button>
@@ -50,7 +50,7 @@ export function SupportButton() {
             <button
               onClick={() => setOpen(false)}
               aria-label={t('support.close')}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white text-xl leading-none flex items-center justify-center transition"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 border border-gray-500 text-white text-xl leading-none flex items-center justify-center transition"
             >
               ×
             </button>
