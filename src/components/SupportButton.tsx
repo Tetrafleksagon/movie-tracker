@@ -26,17 +26,16 @@ export function SupportButton() {
 
   return (
     <>
+      {/* Round FAB stacked just above the scroll-to-top arrow (bottom-right),
+          so it never covers content/controls on small screens. */}
       <button
         onClick={() => setOpen(true)}
         title={t('support.button')}
         aria-label={t('support.button')}
-        style={{ position: 'fixed', top: '50%', right: 0, transform: 'translateY(-50%)', zIndex: 40 }}
-        className="group flex items-center gap-2 bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 text-white py-2.5 pl-3 pr-3 rounded-l-2xl shadow-lg shadow-rose-900/40 transition-colors"
+        style={{ position: 'fixed', right: '24px', bottom: '88px', zIndex: 9998 }}
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white bg-gradient-to-br from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-rose-900/40 transition-colors"
       >
-        <span className="text-xl leading-none" style={beat}>❤️</span>
-        <span className="hidden sm:inline max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold opacity-0 transition-all duration-300 group-hover:max-w-[180px] group-hover:opacity-100">
-          {t('support.button')}
-        </span>
+        <span className="leading-none" style={beat}>❤️</span>
       </button>
 
       {open && (
