@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getPosterUrl, fetchMediaDetails } from '../lib/tmdb'
+import { getPosterUrl, fetchMediaDetails, tmdbLangTag } from '../lib/tmdb'
 import { supabase } from '../lib/supabase'
 import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
@@ -15,7 +15,7 @@ import {
 export function MediaCard({ item }: { item: any }) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const tmdbLang = tmdbLangTag(i18n.language)
   const [showModal, setShowModal] = useState(false)
   // Seeded from props: Library already loaded these in its single query, so we
   // avoid an extra per-card request to Supabase. Local state still tracks the

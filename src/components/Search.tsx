@@ -7,6 +7,7 @@ import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
 import { WelcomeTip } from './WelcomeTip'
 import { fetchLibraryIds } from '../lib/library'
+import { tmdbLangTag } from '../lib/tmdb'
 
 // Soft daily limit on "random pick" for guests — a nudge to register.
 const GUEST_RANDOM_LIMIT = 15
@@ -138,7 +139,7 @@ function CardTile({ item, status, onStatus, onClick }: CardTileProps) {
 export function Search() {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const tmdbLang = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+  const tmdbLang = tmdbLangTag(i18n.language)
 
   // Search state
   const [query, setQuery] = useState('')

@@ -67,7 +67,7 @@ export default {
   about: {
     nav: "About",
     title: "About Movie Tracker",
-    intro: "Movie Tracker keeps every film and series in one place — search, save, rate and track your progress. Available in English and Russian, and installable as an app on your phone.",
+    intro: "Movie Tracker keeps every film and series in one place — search, save, rate and track your progress. Available in English, Russian and Ukrainian, and installable as an app on your phone.",
     features_title: "Features",
     features: [
       { icon: "🔎", title: "Search", desc: "Find any movie or TV show, powered by TMDB." },

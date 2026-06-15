@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
 
-const LANGS = ['en', 'ru'] as const
+const LANGS = ['en', 'ru', 'uk'] as const
 
 export const LanguageSwitcher = () => {
   const { i18n } = useTranslation()
-  const lang = i18n.language === 'ru' ? 'ru' : 'en'
+  const lang = (LANGS as readonly string[]).includes(i18n.language) ? i18n.language : 'en'
 
   // i18n persists the choice to localStorage via its 'languageChanged' listener
   // (see i18n/config.ts), so changeLanguage is all we need here.

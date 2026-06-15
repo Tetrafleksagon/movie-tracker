@@ -8,9 +8,18 @@ export function getPosterUrl(path: string | null): string {
   return IMAGE_BASE + path
 }
 
-// Maps an i18n language code (e.g. 'ru-RU', 'en') to TMDB's short form.
-export function shortLang(lang: string): 'ru' | 'en' {
-  return lang.startsWith('ru') ? 'ru' : 'en'
+// Maps a UI language ('en' | 'ru' | 'uk') to TMDB's full language tag.
+export function tmdbLangTag(lang: string): string {
+  if (lang.startsWith('uk')) return 'uk-UA'
+  if (lang.startsWith('ru')) return 'ru-RU'
+  return 'en-US'
+}
+
+// Maps an i18n language code (e.g. 'ru-RU', 'en') to TMDB's short (ISO 639-1) form.
+export function shortLang(lang: string): 'uk' | 'ru' | 'en' {
+  if (lang.startsWith('uk')) return 'uk'
+  if (lang.startsWith('ru')) return 'ru'
+  return 'en'
 }
 
 // Full details (incl. trailers, cast, seasons) in one request. Used with the
