@@ -56,7 +56,25 @@ export function SupportButton() {
               ×
             </button>
 
-            <div className="text-5xl mb-3 inline-block" style={beat}>🎬</div>
+            {/* Site logo, same shimmer treatment as the header. */}
+            <div className="mb-3 flex items-center justify-center gap-1.5">
+              <span className="text-3xl leading-none" style={beat}>🎬</span>
+              <span
+                className="text-2xl font-bold"
+                style={{
+                  letterSpacing: '-0.5px',
+                  background: 'linear-gradient(90deg, #3b82f6, #1e3a8a, #1e1b4b, #3b82f6)',
+                  backgroundSize: '300% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'shimmer 4s linear infinite',
+                  filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))',
+                }}
+              >
+                Movie Tracker
+              </span>
+            </div>
             <h2 className="text-lg font-bold text-white mb-2">{t('support.title')}</h2>
             <p className="text-sm text-gray-300 leading-relaxed mb-5">{t('support.text')}</p>
 
@@ -64,7 +82,7 @@ export function SupportButton() {
               href={JAR_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-rose-900/40 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition"
             >
               <span style={beat}>❤️</span> {t('support.cta')}
             </a>
