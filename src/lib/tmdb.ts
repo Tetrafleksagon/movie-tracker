@@ -8,28 +8,18 @@ export function getPosterUrl(path: string | null): string {
   return IMAGE_BASE + path
 }
 
+// Maps an i18n language code (e.g. 'ru-RU', 'en') to TMDB's short form.
+export function shortLang(lang: string): 'ru' | 'en' {
+  return lang.startsWith('ru') ? 'ru' : 'en'
+}
+
 // Full details (incl. trailers, cast, seasons) in one request. Used with the
 // shared query key ['details', type, id, lang] by both MovieModal and MediaCard.
 export function fetchMediaDetails(type: 'movie' | 'tv', id: number, lang: string) {
-  const langShort = lang.startsWith('ru') ? 'ru' : 'en'
   return fetch(
     `${BASE_URL}/${type}/${id}?language=${lang}` +
-    `&append_to_response=videos,credits&include_video_language=${langShort},en`
+    `&append_to_response=videos,credits&include_video_language=${shortLang(lang)},en`
   ).then(r => r.json())
-}
-
-export async function searchMedia(query: string, page = 1) {
-  const params = new URLSearchParams({
-    query,
-    include_adult: 'false',
-    language: 'ru-RU',
-    page: String(page),
-  })
-  const response = await fetch(`${BASE_URL}/search/multi?${params.toString()}`)
-  if (!response.ok) throw new Error('TMDB API error')
-  const data = await response.json()
-  const filtered = data.results.filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
-  return { results: filtered, total_pages: data.total_pages, page: data.page, total_results: data.total_results }
 }
 
 // ── Localized title/poster cache ────────────────────────────────────────────

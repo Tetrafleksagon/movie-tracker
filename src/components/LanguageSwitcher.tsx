@@ -6,10 +6,9 @@ export const LanguageSwitcher = () => {
   const { i18n } = useTranslation()
   const lang = i18n.language === 'ru' ? 'ru' : 'en'
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng)
-    localStorage.setItem('language', lng)
-  }
+  // i18n persists the choice to localStorage via its 'languageChanged' listener
+  // (see i18n/config.ts), so changeLanguage is all we need here.
+  const changeLanguage = (lng: string) => i18n.changeLanguage(lng)
 
   // Single oval segmented control.
   return (
