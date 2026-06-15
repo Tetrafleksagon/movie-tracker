@@ -128,15 +128,6 @@ export function MediaCard({ item }: { item: any }) {
     return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
-  const getStars = (val: number) => {
-    if (!val) return ''
-    if (val >= 8) return '⭐⭐⭐'
-    if (val >= 6) return '⭐⭐'
-    return '⭐'
-  }
-
-  const getTypeIcon = () => (mediaType === 'tv' ? '📺' : '🎬')
-  const getTypeLabel = () => t(mediaType === 'tv' ? 'media.tv_show' : 'media.movie')
   const getStatusLabel = (s: string) => t(`status.${s}`) || s
 
   const activeRating = hoverRating ?? userRating ?? 0
@@ -158,7 +149,7 @@ export function MediaCard({ item }: { item: any }) {
           <span className="text-white text-4xl drop-shadow-lg">🔍</span>
         </div>
         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.85)', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', color: '#fbbf24', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span>{getStars(item.vote_average)}</span>
+          <span>{item.vote_average >= 8 ? '⭐⭐⭐' : item.vote_average >= 6 ? '⭐⭐' : item.vote_average ? '⭐' : ''}</span>
           <span style={{ fontSize: '10px', color: '#fff' }}>{rating}</span>
         </div>
       </div>
@@ -170,7 +161,7 @@ export function MediaCard({ item }: { item: any }) {
           <p className="mt-1 text-sm text-gray-400 flex items-center gap-2 flex-wrap">
             <span>{year}</span>
             <span className="text-gray-600">•</span>
-            <span className="flex items-center gap-1">{getTypeIcon()} {getTypeLabel()}</span>
+            <span className="flex items-center gap-1">{mediaType === 'tv' ? '📺' : '🎬'} {t(mediaType === 'tv' ? 'media.tv_show' : 'media.movie')}</span>
           </p>
         </div>
 

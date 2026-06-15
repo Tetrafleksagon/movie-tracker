@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Auth } from './components/Auth'
 import { Search } from './components/Search'
@@ -126,6 +126,13 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
   )
 }
 
+// Guards the authenticated routes: a pulse while auth resolves, then the page
+// for signed-in users or the sign-in screen otherwise.
+function AuthRoute({ element, user, authLoading }: { element: ReactNode; user: any; authLoading: boolean }) {
+  if (authLoading) return <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
+  return user ? <>{element}</> : <Auth />
+}
+
 function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
   return (
@@ -134,46 +141,10 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
       <Routes>
         <Route path="/" element={<Search />} />
         <Route path="/about" element={<About />} />
-        <Route
-          path="/library"
-          element={
-            authLoading
-              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
-              : user
-                ? <Library />
-                : <Auth />
-          }
-        />
-        <Route
-          path="/stats"
-          element={
-            authLoading
-              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
-              : user
-                ? <Stats />
-                : <Auth />
-          }
-        />
-        <Route
-          path="/lists"
-          element={
-            authLoading
-              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
-              : user
-                ? <Lists />
-                : <Auth />
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            authLoading
-              ? <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
-              : user
-                ? <Profile />
-                : <Auth />
-          }
-        />
+        <Route path="/library" element={<AuthRoute user={user} authLoading={authLoading} element={<Library />} />} />
+        <Route path="/stats" element={<AuthRoute user={user} authLoading={authLoading} element={<Stats />} />} />
+        <Route path="/lists" element={<AuthRoute user={user} authLoading={authLoading} element={<Lists />} />} />
+        <Route path="/profile" element={<AuthRoute user={user} authLoading={authLoading} element={<Profile />} />} />
       </Routes>
       <footer className="text-center text-xs text-gray-600 py-6">
         <Link to="/about" className="text-gray-400 hover:text-white transition">{t('about.nav')}</Link>
