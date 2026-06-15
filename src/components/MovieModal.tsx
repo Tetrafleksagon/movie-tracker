@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { fetchMediaDetails } from '../lib/tmdb'
+import { fetchMediaDetails, shortLang } from '../lib/tmdb'
 import { StatusSelect } from './StatusSelect'
 import { EpisodeTracker } from './EpisodeTracker'
 import { AddToListMenu } from './AddToListMenu'
@@ -16,7 +16,7 @@ type Props = {
 
 export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
   const { t } = useTranslation()
-  const langShort = lang.startsWith('ru') ? 'ru' : 'en'
+  const langShort = shortLang(lang)
   const [playTrailer, setPlayTrailer] = useState(false)
 
   const type = item.media_type === 'tv' ? 'tv' : 'movie'
