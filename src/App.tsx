@@ -10,6 +10,7 @@ import { About } from './components/About'
 import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
+import { SupportButton } from './components/SupportButton'
 import { Avatar } from './components/Avatar'
 import { supabase } from './lib/supabase'
 import { useMyProfile, displayNameOf } from './lib/profile'
@@ -152,6 +153,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
       <ScrollToTop />
+      <SupportButton />
     </div>
   )
 }

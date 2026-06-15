@@ -86,7 +86,7 @@ export function MovieModal({ item, status, lang, onStatus, onClose }: Props) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white text-xl leading-none hover:bg-black/90 transition"
+          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-gray-700/90 hover:bg-gray-600 border border-gray-400/70 text-white text-lg leading-none flex items-center justify-center transition"
         >
           ×
         </button>

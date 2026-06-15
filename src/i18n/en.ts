@@ -203,5 +203,12 @@ export default {
     by_decade: "By decade",
     top_rated: "Your top rated",
     episodes_watched: "Episodes watched"
+  },
+  support: {
+    button: "Support the project",
+    title: "Support the project",
+    text: "Movie Tracker is an independent, ad-free project. If you enjoy it, please consider supporting its development — it helps cover the servers and build new features. Thank you! 💙",
+    cta: "Support via Monobank",
+    close: "Close"
   }
 } as const
