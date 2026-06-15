@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 export function Auth() {
-  const { t } = useTranslation()
-  
+  const { t, i18n } = useTranslation()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,7 +40,7 @@ export function Auth() {
 
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
-      redirectTo: 'https://filmtrack.pp.ua/reset-password.html',
+      redirectTo: `https://filmtrack.pp.ua/reset-password.html?lang=${i18n.language}`,
     })
 
     setLoading(false)
