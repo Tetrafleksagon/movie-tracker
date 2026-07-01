@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { PremiumBadge } from './PremiumBadge'
 
 type Feature = { icon: string; title: string; desc: string }
 
@@ -35,9 +36,7 @@ export function About() {
       {/* Premium */}
       <section className="bg-amber-500/5 border border-amber-500/30 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-2.5 py-0.5">
-            ★ {t('premium.badge')}
-          </span>
+          <PremiumBadge />
           <h2 className="text-lg font-bold text-gray-100">{t('about.premium_title')}</h2>
         </div>
         <p className="text-gray-300 leading-relaxed mb-4">{t('about.premium_intro')}</p>

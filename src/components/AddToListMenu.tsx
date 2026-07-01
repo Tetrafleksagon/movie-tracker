@@ -6,6 +6,7 @@ import {
   type ListMedia,
 } from '../lib/lists'
 import { useSubscription } from '../lib/subscription'
+import { PremiumBadge } from './PremiumBadge'
 
 // Compact "add to list" control shown in the movie modal: a toggle that opens
 // a panel with one checkbox per list plus inline "create list".
@@ -43,9 +44,7 @@ export function AddToListMenu({ item }: { item: ListMedia }) {
         </button>
         {open && (
           <div className="mt-2 bg-gray-900/60 border border-amber-500/30 rounded-lg p-3 text-center">
-            <span className="inline-block text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full px-2.5 py-0.5 mb-2">
-              {t('premium.badge')}
-            </span>
+            <PremiumBadge className="mb-2" />
             <p className="text-xs text-gray-400 leading-relaxed">{t('premium.lists_desc')}</p>
           </div>
         )}

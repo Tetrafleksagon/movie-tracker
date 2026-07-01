@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useMyProfile, displayNameOf } from '../lib/profile'
 import { useSubscription } from '../lib/subscription'
 import { Avatar } from './Avatar'
+import { PremiumBadge } from './PremiumBadge'
 
 type Props = {
   userId: string
@@ -55,11 +56,7 @@ export function ShareModal({ userId, onClose }: Props) {
           <div className="min-w-0">
             <p className="font-semibold text-white truncate flex items-center gap-2">
               {shownName}
-              {isPremium && (
-                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-1.5 py-0.5">
-                  ★ {t('premium.badge')}
-                </span>
-              )}
+              {isPremium && <PremiumBadge />}
             </p>
             <p className="text-xs text-gray-500 truncate">{t('public_library.title_named', { name: shownName })}</p>
           </div>

@@ -35,10 +35,15 @@ export default {
     saving: "Сохранение",
     add: "Добавить",
     remove: "Удалить",
+    close: "Закрыть",
+    clear: "Очистить",
     loading: "Загрузка...",
     rating: "Оценка",
     history: "История",
     min: "мин"
+  },
+  footer: {
+    copyright: "Copyright Fleksagon"
   },
   modal: {
     seasons: "сезонов",

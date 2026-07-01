@@ -7,7 +7,7 @@ import { MovieModal } from './MovieModal'
 import { StatusSelect } from './StatusSelect'
 import { WelcomeTip } from './WelcomeTip'
 import { fetchLibraryIds } from '../lib/library'
-import { tmdbLangTag } from '../lib/tmdb'
+import { tmdbLangTag, fetchJson } from '../lib/tmdb'
 
 // Soft daily limit on "random pick" for guests — a nudge to register.
 const GUEST_RANDOM_LIMIT = 15
@@ -196,11 +196,11 @@ export function Search() {
       // per hour across all visitors.
       const [trendingPages, genreData] = await Promise.all([
         Promise.all([1, 2].map(p =>
-          fetch(`/api/tmdb/trending/all/week?language=${tmdbLang}&page=${p}`).then(r => r.json())
+          fetchJson(`/api/tmdb/trending/all/week?language=${tmdbLang}&page=${p}`)
         )),
         Promise.all(GENRE_CONFIGS.map(async g => {
           const pages = await Promise.all([1, 2].map(p =>
-            fetch(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=${p}&language=${tmdbLang}`).then(r => r.json())
+            fetchJson(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=${p}&language=${tmdbLang}`)
           ))
           return { ...g, movies: pages.flatMap((d: any) => d.results || []).slice(0, 20) }
         })),
@@ -239,7 +239,7 @@ export function Search() {
         staleTime: Infinity,
         queryFn: async () => {
           const pages = await Promise.all([1, 2, 3, 4, 5, 6, 7, 8].map(p =>
-            fetch(`/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${p}`).then(r => r.json())
+            fetchJson(`/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${p}`)
           ))
           return pages.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
         },
@@ -308,10 +308,9 @@ export function Search() {
 
   const fetchSuggestions = async (q: string) => {
     try {
-      const res = await fetch(
+      const data = await fetchJson(
         `/api/tmdb/search/multi?language=${tmdbLang}&query=${encodeURIComponent(q)}`
       )
-      const data = await res.json()
       const items = (data.results || []).filter((i: any) => i.media_type !== 'person').slice(0, 7)
       setSuggestions(items)
       setShowSuggestions(items.length > 0)
@@ -353,10 +352,9 @@ export function Search() {
     setIsSearchMode(true)
     setItemStatuses({})
     try {
-      const res = await fetch(
+      const data = await fetchJson(
         `/api/tmdb/search/multi?language=${tmdbLang}&query=${encodeURIComponent(query)}`
       )
-      const data = await res.json()
       setResults(data.results || [])
     } catch (err) {
       console.error('Search error:', err)
@@ -417,6 +415,7 @@ export function Search() {
                 <button
                   type="button"
                   onClick={clearSearch}
+                  aria-label={t('common.clear')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
                   tabIndex={-1}
                 >

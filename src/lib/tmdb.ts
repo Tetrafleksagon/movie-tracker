@@ -3,6 +3,14 @@
 const BASE_URL = '/api/tmdb'
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
 
+// fetch + JSON with a status check, so 4xx/5xx bodies are never silently
+// parsed and rendered as data.
+export async function fetchJson(url: string) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`TMDB request failed: ${res.status}`)
+  return res.json()
+}
+
 export function getPosterUrl(path: string | null): string {
   if (!path) return 'https://via.placeholder.com/300x450?text=No+Poster'
   return IMAGE_BASE + path
@@ -25,10 +33,10 @@ export function shortLang(lang: string): 'uk' | 'ru' | 'en' {
 // Full details (incl. trailers, cast, seasons) in one request. Used with the
 // shared query key ['details', type, id, lang] by both MovieModal and MediaCard.
 export function fetchMediaDetails(type: 'movie' | 'tv', id: number, lang: string) {
-  return fetch(
+  return fetchJson(
     `${BASE_URL}/${type}/${id}?language=${lang}` +
     `&append_to_response=videos,credits&include_video_language=${shortLang(lang)},en`
-  ).then(r => r.json())
+  )
 }
 
 // ── Localized title/poster cache ────────────────────────────────────────────

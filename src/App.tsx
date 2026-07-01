@@ -1,13 +1,8 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Auth } from './components/Auth'
 import { Search } from './components/Search'
 import { Library } from './components/Library'
-import { Stats } from './components/Stats'
-import { Lists } from './components/Lists'
-import { Profile } from './components/Profile'
-import { About } from './components/About'
-import { SharedLibrary } from './components/SharedLibrary'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
 import { SupportButton } from './components/SupportButton'
@@ -18,6 +13,16 @@ import { useSubscription } from './lib/subscription'
 import { APP_VERSION } from './lib/version'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
+
+// Secondary routes are code-split: they load on demand instead of inflating
+// the initial bundle (Search/Library/Auth stay eager as the primary paths).
+const Stats = lazy(() => import('./components/Stats').then(m => ({ default: m.Stats })))
+const Lists = lazy(() => import('./components/Lists').then(m => ({ default: m.Lists })))
+const Profile = lazy(() => import('./components/Profile').then(m => ({ default: m.Profile })))
+const About = lazy(() => import('./components/About').then(m => ({ default: m.About })))
+const SharedLibrary = lazy(() => import('./components/SharedLibrary').then(m => ({ default: m.SharedLibrary })))
+
+const RouteFallback = () => <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
 
 function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
@@ -139,14 +144,16 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
   return (
     <div className="min-h-screen bg-gray-900">
       <Navigation user={user} authLoading={authLoading} />
-      <Routes>
-        <Route path="/" element={<Search />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/library" element={<AuthRoute user={user} authLoading={authLoading} element={<Library />} />} />
-        <Route path="/stats" element={<AuthRoute user={user} authLoading={authLoading} element={<Stats />} />} />
-        <Route path="/lists" element={<AuthRoute user={user} authLoading={authLoading} element={<Lists />} />} />
-        <Route path="/profile" element={<AuthRoute user={user} authLoading={authLoading} element={<Profile />} />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Search />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/library" element={<AuthRoute user={user} authLoading={authLoading} element={<Library />} />} />
+          <Route path="/stats" element={<AuthRoute user={user} authLoading={authLoading} element={<Stats />} />} />
+          <Route path="/lists" element={<AuthRoute user={user} authLoading={authLoading} element={<Lists />} />} />
+          <Route path="/profile" element={<AuthRoute user={user} authLoading={authLoading} element={<Profile />} />} />
+        </Routes>
+      </Suspense>
       <footer className="text-center text-xs text-gray-600 py-6">
         <Link to="/about" className="text-gray-400 hover:text-white transition">{t('about.nav')}</Link>
         <span className="mx-2 text-gray-600">·</span>
@@ -157,7 +164,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
         >
           ❤️ {t('support.button')}
         </button>
-        <span className="block mt-1">Copyright Fleksagon {new Date().getFullYear()}</span>
+        <span className="block mt-1">{t('footer.copyright')} {new Date().getFullYear()}</span>
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
       <ScrollToTop />
@@ -204,7 +211,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/share/:userId" element={<SharedLibrary />} />
+        <Route
+          path="/share/:userId"
+          element={<Suspense fallback={<RouteFallback />}><SharedLibrary /></Suspense>}
+        />
         <Route path="*" element={<AppContent user={user} authLoading={authLoading} />} />
       </Routes>
     </BrowserRouter>

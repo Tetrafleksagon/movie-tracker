@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { fetchJson } from '../lib/tmdb'
 import {
   epKey, realSeasons, totalEpisodeCount, statusAfterProgress,
   fetchAllEpisodes, insertEpisode,
@@ -53,7 +54,7 @@ function SeasonRow({ tmdbId, season, lang, watched, onToggle, onMarkSeason }: Se
   // Episode titles are fetched lazily, only when the season is expanded.
   const { data: seasonDetails } = useQuery({
     queryKey: ['season', tmdbId, n, lang],
-    queryFn: () => fetch(`/api/tmdb/tv/${tmdbId}/season/${n}?language=${lang}`).then(r => r.json()),
+    queryFn: () => fetchJson(`/api/tmdb/tv/${tmdbId}/season/${n}?language=${lang}`),
     enabled: expanded,
   })
 

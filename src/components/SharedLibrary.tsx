@@ -8,6 +8,7 @@ import { RATING_COLORS, getStatusColor } from '../lib/status'
 import { fetchProfileById } from '../lib/profile'
 import { MovieModal } from './MovieModal'
 import { Avatar } from './Avatar'
+import { PremiumBadge } from './PremiumBadge'
 
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
@@ -84,11 +85,7 @@ export function SharedLibrary() {
           <h2 className="text-xl font-bold text-gray-200 min-w-0 truncate">
             {ownerName ? t('public_library.title_named', { name: ownerName }) : t('public_library.title')}
           </h2>
-          {ownerPremium && (
-            <span className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-2 py-0.5">
-              ★ {t('premium.badge')}
-            </span>
-          )}
+          {ownerPremium && <PremiumBadge className="flex-shrink-0" />}
           {!loading && !notFound && (
             <span className="text-sm text-gray-500 flex-shrink-0 ml-auto">{items.length} {t('public_library.items')}</span>
           )}
@@ -186,7 +183,7 @@ export function SharedLibrary() {
       )}
 
       <footer className="text-center text-xs text-gray-600 py-6">
-        Copyright Fleksagon {new Date().getFullYear()}
+        {t('footer.copyright')} {new Date().getFullYear()}
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
     </div>

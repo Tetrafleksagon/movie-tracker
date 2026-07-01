@@ -35,10 +35,15 @@ export default {
     saving: "Saving",
     add: "Add",
     remove: "Remove",
+    close: "Close",
+    clear: "Clear",
     loading: "Loading...",
     rating: "Rating",
     history: "History",
     min: "min"
+  },
+  footer: {
+    copyright: "Copyright Fleksagon"
   },
   modal: {
     seasons: "seasons",

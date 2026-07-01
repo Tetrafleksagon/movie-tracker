@@ -35,10 +35,15 @@ export default {
     saving: "Збереження",
     add: "Додати",
     remove: "Видалити",
+    close: "Закрити",
+    clear: "Очистити",
     loading: "Завантаження...",
     rating: "Оцінка",
     history: "Історія",
     min: "хв"
+  },
+  footer: {
+    copyright: "Copyright Fleksagon"
   },
   modal: {
     seasons: "сезонів",

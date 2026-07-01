@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useMyProfile, updateDisplayName, displayNameOf } from '../lib/profile'
 import { useSubscription } from '../lib/subscription'
 import { Avatar } from './Avatar'
+import { PremiumBadge } from './PremiumBadge'
 
 export function Profile() {
   const { t } = useTranslation()
@@ -68,11 +69,7 @@ export function Profile() {
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-lg font-semibold text-white truncate">{shownName}</p>
-            {isPremium && (
-              <span className="text-[11px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-2 py-0.5">
-                ★ {t('premium.badge')}
-              </span>
-            )}
+            {isPremium && <PremiumBadge />}
           </div>
           <p className="text-sm text-gray-400 truncate">{email}</p>
         </div>

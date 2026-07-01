@@ -229,6 +229,7 @@ export function Library() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
+                aria-label={t('common.clear')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
               >×</button>
             )}
