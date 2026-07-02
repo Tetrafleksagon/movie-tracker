@@ -57,6 +57,18 @@ export function MediaCard({ item }: { item: any }) {
   const totalEps = totalEpisodeCount(seasons)
   const nextEp = nextUnwatched(seasons, watchedEps)
 
+  // "New episode" badge (no extra request — uses details we already fetch):
+  // for an ONGOING followed show, the next episode you'd watch has already
+  // aired (i.e. there's an aired episode waiting). Avoids flagging never-started
+  // shows (progress = 0) and old completed shows you're slowly bingeing.
+  const lastAired = tvDetails?.last_episode_to_air
+  const ongoing = tvDetails?.status === 'Returning Series' || !!tvDetails?.next_episode_to_air
+  const hasNewEpisode = Boolean(
+    isTV && ongoing && lastAired && watchedEps.size > 0 && nextEp &&
+    (nextEp.season < lastAired.season_number ||
+      (nextEp.season === lastAired.season_number && nextEp.episode <= lastAired.episode_number))
+  )
+
   const plusOne = async () => {
     if (!nextEp) return
     const { error } = await insertEpisode(item.id, nextEp.season, nextEp.episode)
@@ -145,6 +157,12 @@ export function MediaCard({ item }: { item: any }) {
         onClick={() => setShowModal(true)}
       >
         <img src={getPosterUrl(item.poster_path)} className="absolute inset-0 w-full h-full object-cover object-top group-hover:brightness-75 transition-all duration-200" alt={title} />
+        {hasNewEpisode && (
+          <div className="absolute top-1 left-1 z-10 flex items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            {t('episodes.new_badge')}
+          </div>
+        )}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <span className="text-white text-4xl drop-shadow-lg">🔍</span>
         </div>

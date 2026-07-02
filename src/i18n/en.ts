@@ -78,7 +78,7 @@ export default {
       { icon: "🔎", title: "Search", desc: "Find any movie or TV show, powered by TMDB." },
       { icon: "🗂️", title: "Your library", desc: "Track titles with statuses: planned, watching, watched, dropped." },
       { icon: "⭐", title: "Ratings & history", desc: "Rate anything 1–10 and see a history of status changes." },
-      { icon: "📺", title: "Episode tracking", desc: "Mark seasons and episodes for shows, with progress." },
+      { icon: "📺", title: "Episode tracking", desc: "Mark seasons and episodes, with progress — and see when a new episode airs." },
       { icon: "🎬", title: "Rich details", desc: "Trailers, cast and synopsis — right in the card." },
       { icon: "🎲", title: "Discover", desc: "Trending, genres and a random pick when you can't choose." },
       { icon: "📊", title: "Statistics", desc: "A dashboard of your watching habits and ratings." },
@@ -103,7 +103,8 @@ export default {
     episode: "Episode",
     mark_all: "✓ Mark entire season",
     unmark_all: "Unmark season",
-    next: "Next"
+    next: "Next",
+    new_badge: "New episode"
   },
   auth: {
     email: "Email address",
