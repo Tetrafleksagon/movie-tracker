@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 // Secondary routes are code-split: they load on demand instead of inflating
 // the initial bundle (Search/Library/Auth stay eager as the primary paths).
 const Stats = lazy(() => import('./components/Stats').then(m => ({ default: m.Stats })))
+const Calendar = lazy(() => import('./components/Calendar').then(m => ({ default: m.Calendar })))
 const Lists = lazy(() => import('./components/Lists').then(m => ({ default: m.Lists })))
 const Profile = lazy(() => import('./components/Profile').then(m => ({ default: m.Profile })))
 const About = lazy(() => import('./components/About').then(m => ({ default: m.About })))
@@ -77,6 +78,16 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
             }`}
           >
             {t('header.library')}
+          </Link>
+          <Link
+            to="/calendar"
+            title={t('header.calendar')}
+            className={`text-sm font-medium transition ${
+              isActive('/calendar') ? 'text-blue-400' : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            <span className="sm:hidden">📅</span>
+            <span className="hidden sm:inline">{t('header.calendar')}</span>
           </Link>
           <Link
             to="/stats"
@@ -149,6 +160,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
           <Route path="/" element={<Search />} />
           <Route path="/about" element={<About />} />
           <Route path="/library" element={<AuthRoute user={user} authLoading={authLoading} element={<Library />} />} />
+          <Route path="/calendar" element={<AuthRoute user={user} authLoading={authLoading} element={<Calendar />} />} />
           <Route path="/stats" element={<AuthRoute user={user} authLoading={authLoading} element={<Stats />} />} />
           <Route path="/lists" element={<AuthRoute user={user} authLoading={authLoading} element={<Lists />} />} />
           <Route path="/profile" element={<AuthRoute user={user} authLoading={authLoading} element={<Profile />} />} />
@@ -193,6 +205,7 @@ function App() {
           queryClient.removeQueries({ queryKey: ['library'] })
           queryClient.removeQueries({ queryKey: ['library-ids'] })
           queryClient.removeQueries({ queryKey: ['stats'] })
+          queryClient.removeQueries({ queryKey: ['calendar-sources'] })
           queryClient.removeQueries({ queryKey: ['episodes'] })
           queryClient.removeQueries({ queryKey: ['subscription'] })
           queryClient.removeQueries({ queryKey: ['profile'] })

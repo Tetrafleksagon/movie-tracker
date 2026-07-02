@@ -3,6 +3,7 @@ export default {
   header: {
     search: "Search",
     library: "Library",
+    calendar: "Calendar",
     stats: "Stats",
     lists: "Lists",
     logout: "Logout",
@@ -81,6 +82,7 @@ export default {
       { icon: "📺", title: "Episode tracking", desc: "Mark seasons and episodes, with progress — and see when a new episode airs." },
       { icon: "🎬", title: "Rich details", desc: "Trailers, cast and synopsis — right in the card." },
       { icon: "🎲", title: "Discover", desc: "Trending, genres and a random pick when you can't choose." },
+      { icon: "📅", title: "Calendar", desc: "See upcoming episodes and premieres from your library." },
       { icon: "📊", title: "Statistics", desc: "A dashboard of your watching habits and ratings." },
       { icon: "🔗", title: "Share", desc: "Share your library with a link." }
     ],
@@ -105,6 +107,12 @@ export default {
     unmark_all: "Unmark season",
     next: "Next",
     new_badge: "New episode"
+  },
+  calendar: {
+    title: "Upcoming",
+    empty: "Nothing upcoming",
+    empty_sub: "New episodes of the shows you follow and unreleased movies in your library will appear here.",
+    premiere: "Premiere"
   },
   auth: {
     email: "Email address",
