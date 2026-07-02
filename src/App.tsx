@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, type ReactNode } from 'react'
+import { useState, useEffect, lazy, Suspense, type ReactNode, type ComponentType } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Auth } from './components/Auth'
 import { Search } from './components/Search'
@@ -14,14 +14,37 @@ import { APP_VERSION } from './lib/version'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 
+// A new deploy renames every hashed chunk, so a tab opened before the deploy
+// points at files that no longer exist — importing one throws. Recover by
+// reloading once (fresh index.html → new chunk names); a sessionStorage flag
+// stops an infinite reload loop if the failure is something else.
+function lazyWithReload<T extends { default: ComponentType<any> }>(
+  factory: () => Promise<T>
+) {
+  return lazy(async () => {
+    try {
+      const mod = await factory()
+      sessionStorage.removeItem('chunk-reload')
+      return mod
+    } catch (err) {
+      if (!sessionStorage.getItem('chunk-reload')) {
+        sessionStorage.setItem('chunk-reload', '1')
+        window.location.reload()
+        return new Promise<T>(() => {}) // never resolves — the reload takes over
+      }
+      throw err
+    }
+  })
+}
+
 // Secondary routes are code-split: they load on demand instead of inflating
 // the initial bundle (Search/Library/Auth stay eager as the primary paths).
-const Stats = lazy(() => import('./components/Stats').then(m => ({ default: m.Stats })))
-const Calendar = lazy(() => import('./components/Calendar').then(m => ({ default: m.Calendar })))
-const Lists = lazy(() => import('./components/Lists').then(m => ({ default: m.Lists })))
-const Profile = lazy(() => import('./components/Profile').then(m => ({ default: m.Profile })))
-const About = lazy(() => import('./components/About').then(m => ({ default: m.About })))
-const SharedLibrary = lazy(() => import('./components/SharedLibrary').then(m => ({ default: m.SharedLibrary })))
+const Stats = lazyWithReload(() => import('./components/Stats').then(m => ({ default: m.Stats })))
+const Calendar = lazyWithReload(() => import('./components/Calendar').then(m => ({ default: m.Calendar })))
+const Lists = lazyWithReload(() => import('./components/Lists').then(m => ({ default: m.Lists })))
+const Profile = lazyWithReload(() => import('./components/Profile').then(m => ({ default: m.Profile })))
+const About = lazyWithReload(() => import('./components/About').then(m => ({ default: m.About })))
+const SharedLibrary = lazyWithReload(() => import('./components/SharedLibrary').then(m => ({ default: m.SharedLibrary })))
 
 const RouteFallback = () => <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
 
