@@ -57,10 +57,27 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png}'],
-          // SPA fallback must not swallow API calls or the password-reset page.
-          navigateFallbackDenylist: [/^\/api\//],
-          // No runtimeCaching: /api/tmdb and Supabase must always hit the network
-          // (the edge proxy and React Query already handle caching).
+          cleanupOutdatedCaches: true,
+          // Do NOT let the SW serve navigations from the precached index.html.
+          // With skipWaiting+clientsClaim (autoUpdate), a cache-first index would
+          // hand an old document referencing deleted hashed bundles after a deploy
+          // → white screen. Cloudflare's `_redirects` (/* → /index.html 200) already
+          // does the SPA fallback, so navigations should always fetch a fresh index.
+          navigateFallback: null,
+          runtimeCaching: [
+            // TMDB poster/backdrop images are immutable and off-origin — cache them
+            // so a hard refresh (Ctrl-F5) doesn't re-download every poster. Does NOT
+            // touch /api/tmdb or Supabase (those still always hit the network).
+            {
+              urlPattern: /^https:\/\/image\.tmdb\.org\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'tmdb-images',
+                expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
       }),
     ],
