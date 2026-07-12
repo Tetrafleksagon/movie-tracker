@@ -226,6 +226,19 @@ export default {
     cta: "Support via Monobank",
     close: "Close"
   },
+  feedback: {
+    footer_link: "Feedback",
+    title: "Feedback",
+    subtitle: "Tell us what you like, what's broken or what's missing. We read every message.",
+    message_placeholder: "Your message…",
+    email_placeholder: "Email (optional)",
+    email_hint: "Leave it if you want a reply. Otherwise we treat the message as anonymous.",
+    send: "Send",
+    sending: "Sending…",
+    sent_title: "Thanks!",
+    sent_text: "Your message was delivered. If you left an email, we'll reply when needed.",
+    error: "Couldn't send. Please try again in a moment."
+  },
   early: {
     title: "🎁 Premium is on us!",
     text: "You joined during launch — so all premium features (your own lists and more) are free for you while we're getting started. Check your inbox to confirm your email.",

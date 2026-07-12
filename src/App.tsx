@@ -6,6 +6,7 @@ import { Library } from './components/Library'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ScrollToTop } from './components/ScrollToTop'
 import { SupportButton } from './components/SupportButton'
+import { FeedbackModal } from './components/FeedbackModal'
 import { Avatar } from './components/Avatar'
 import { supabase } from './lib/supabase'
 import { useMyProfile, displayNameOf } from './lib/profile'
@@ -199,11 +200,20 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
         >
           ❤️ {t('support.button')}
         </button>
+        <span className="mx-2 text-gray-600">·</span>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('feedback:open'))}
+          className="text-gray-400 hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-xs"
+        >
+          💬 {t('feedback.footer_link')}
+        </button>
         <span className="block mt-1">{t('footer.copyright')} {new Date().getFullYear()}</span>
         <span className="block mt-0.5 text-[10px] text-gray-500 select-all">v{APP_VERSION}</span>
       </footer>
       <ScrollToTop />
       <SupportButton />
+      <FeedbackModal />
     </div>
   )
 }
