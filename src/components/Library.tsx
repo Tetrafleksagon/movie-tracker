@@ -31,6 +31,10 @@ export function Library() {
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'rating' | 'title' | 'user_rating'>('date')
+  // Each sort key has a "natural" default direction (newest first, best first,
+  // A→Z). Clicking the active key toggles direction; picking a different key
+  // resets to that key's natural default.
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [currentIndex, setCurrentIndex] = useState(1)
@@ -93,15 +97,27 @@ export function Library() {
       base = base.filter(i => (i.title || '').toLowerCase().includes(q))
     }
     const sorted = [...base]
-    if (sortBy === 'title') sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-    else if (sortBy === 'rating') sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
-    else if (sortBy === 'user_rating') sorted.sort((a, b) => (b.user_rating || 0) - (a.user_rating || 0))
+    // `date` uses the natural order from Supabase (updated_at desc), so we
+    // only need to reverse it for asc. Other keys sort in desc/A→Z natural
+    // direction; the sign flips for the opposite direction.
+    if (sortBy === 'date') {
+      if (sortDir === 'asc') sorted.reverse()
+    } else if (sortBy === 'title') {
+      sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+      if (sortDir === 'desc') sorted.reverse()
+    } else if (sortBy === 'rating') {
+      sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+      if (sortDir === 'asc') sorted.reverse()
+    } else if (sortBy === 'user_rating') {
+      sorted.sort((a, b) => (b.user_rating || 0) - (a.user_rating || 0))
+      if (sortDir === 'asc') sorted.reverse()
+    }
     setFilteredItems(sorted)
-  }, [activeFilter, items, searchQuery, sortBy])
+  }, [activeFilter, items, searchQuery, sortBy, sortDir])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [activeFilter, pageSize, searchQuery, sortBy])
+  }, [activeFilter, pageSize, searchQuery, sortBy, sortDir])
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -235,17 +251,29 @@ export function Library() {
             )}
           </div>
           <div className="flex gap-1 flex-shrink-0">
-            {(['date', 'rating', 'title', 'user_rating'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setSortBy(s)}
-                className={`px-2 py-1 rounded text-xs font-medium transition ${
-                  sortBy === s ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                {t(`library.sort_${s}`)}
-              </button>
-            ))}
+            {(['date', 'rating', 'title', 'user_rating'] as const).map(s => {
+              const active = sortBy === s
+              // Natural default direction per key: title reads A→Z, everything
+              // else (newest/best/highest first) starts descending.
+              const naturalDir: 'asc' | 'desc' = s === 'title' ? 'asc' : 'desc'
+              const onClick = () => {
+                if (active) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+                else { setSortBy(s); setSortDir(naturalDir) }
+              }
+              return (
+                <button
+                  key={s}
+                  onClick={onClick}
+                  aria-label={`${t(`library.sort_${s}`)} ${sortDir === 'asc' ? '↑' : '↓'}`}
+                  className={`px-2 py-1 rounded text-xs font-medium transition ${
+                    active ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {t(`library.sort_${s}`)}
+                  {active && <span className="ml-1 tabular-nums">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
