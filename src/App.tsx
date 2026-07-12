@@ -142,7 +142,7 @@ function Navigation({ user, authLoading }: { user: any; authLoading: boolean }) 
                   title={shownName}
                   className={`flex items-center gap-2 transition ${isActive('/profile') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
                 >
-                  <Avatar name={shownName} size={28} premium={isPremium} />
+                  <Avatar name={shownName} size={28} premium={isPremium} url={profile?.avatar_url} />
                   <span className="hidden sm:inline text-sm font-medium text-gray-300 max-w-[120px] truncate">{shownName}</span>
                 </Link>
                 <button

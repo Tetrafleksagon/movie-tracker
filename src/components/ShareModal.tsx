@@ -52,7 +52,7 @@ export function ShareModal({ userId, onClose }: Props) {
 
         {/* Identity preview — how the shared page is presented */}
         <div className="flex items-center gap-3 bg-gray-700/40 border border-gray-700 rounded-lg p-3 mb-4">
-          <Avatar name={shownName} size={40} premium={isPremium} />
+          <Avatar name={shownName} size={40} premium={isPremium} url={profile?.avatar_url} />
           <div className="min-w-0">
             <p className="font-semibold text-white truncate flex items-center gap-2">
               {shownName}

@@ -226,6 +226,26 @@ export default {
     cta: "Support via Monobank",
     close: "Close"
   },
+  avatar: {
+    section: "Avatar",
+    upload: "Upload avatar",
+    change: "Change avatar",
+    remove: "Remove",
+    title: "Custom avatar",
+    subtitle: "The image is cropped to a square and resized to 256×256 WebP.",
+    drop_or_click: "Drag an image here or click to pick a file",
+    picked: "Preview — this is how your avatar will look",
+    limits: "Up to {{mb}} MB. JPG, PNG or WebP.",
+    save: "Save",
+    saving: "Saving…",
+    confirm_remove: "Remove your custom avatar?",
+    err_too_big: "File is too large (max 5 MB).",
+    err_wrong_type: "Only image files are allowed.",
+    err_decode: "Couldn't read this image. Try another one.",
+    err_upload: "Upload failed. Please try again.",
+    locked_title: "Custom avatar is a premium feature",
+    locked_desc: "Uploading your own picture is available with Premium. Subscriptions are coming soon."
+  },
   feedback: {
     footer_link: "Feedback",
     title: "Feedback",

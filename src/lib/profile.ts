@@ -36,6 +36,46 @@ export async function updateDisplayName(name: string) {
     .upsert({ id: user.id, display_name: clean, updated_at: new Date().toISOString() }, { onConflict: 'id' })
 }
 
+// Path convention mirrors avatars_storage.sql RLS: `<uid>.webp` in bucket `avatars`.
+function avatarPath(uid: string): string { return `${uid}.webp` }
+
+// Upload the encoded WebP to Storage, then persist its public URL in profiles.
+// The URL carries an `updated_at`-derived query param so browsers refresh their
+// cached copy right after re-upload (Storage sends long-lived Cache-Control).
+export async function uploadAvatar(blob: Blob) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: { message: 'not signed in' } }
+
+  const path = avatarPath(user.id)
+  const up = await supabase.storage.from('avatars').upload(path, blob, {
+    upsert: true,
+    contentType: 'image/webp',
+    cacheControl: '3600',
+  })
+  if (up.error) return { error: up.error }
+
+  const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path)
+  const now = new Date().toISOString()
+  const url = `${pub.publicUrl}?v=${Date.parse(now)}`
+  const res = await supabase
+    .from('profiles')
+    .upsert({ id: user.id, avatar_url: url, updated_at: now }, { onConflict: 'id' })
+  return res.error ? { error: res.error } : { data: { avatar_url: url } }
+}
+
+export async function removeAvatar() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: { message: 'not signed in' } }
+
+  const del = await supabase.storage.from('avatars').remove([avatarPath(user.id)])
+  // Storage remove is idempotent — a missing file returns error we can ignore.
+  if (del.error && !/not.?found/i.test(del.error.message)) return { error: del.error }
+
+  return supabase
+    .from('profiles')
+    .upsert({ id: user.id, avatar_url: null, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+}
+
 // Name to show in the UI: chosen display name, else the email's local part.
 export function displayNameOf(profile: Profile | null | undefined, email: string | null | undefined): string {
   const dn = profile?.display_name?.trim()

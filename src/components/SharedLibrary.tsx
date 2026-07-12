@@ -20,6 +20,7 @@ export function SharedLibrary() {
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [ownerName, setOwnerName] = useState<string | null>(null)
   const [ownerPremium, setOwnerPremium] = useState(false)
+  const [ownerAvatar, setOwnerAvatar] = useState<string | null>(null)
 
   useEffect(() => {
     if (userId) {
@@ -27,6 +28,7 @@ export function SharedLibrary() {
       fetchProfileById(userId).then(p => {
         setOwnerName(p?.display_name?.trim() || null)
         setOwnerPremium(!!p?.is_premium)
+        setOwnerAvatar(p?.avatar_url || null)
       })
     }
   }, [userId])
@@ -81,7 +83,7 @@ export function SharedLibrary() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          {ownerName && <Avatar name={ownerName} size={40} premium={ownerPremium} />}
+          {ownerName && <Avatar name={ownerName} size={40} premium={ownerPremium} url={ownerAvatar} />}
           <h2 className="text-xl font-bold text-gray-200 min-w-0 truncate">
             {ownerName ? t('public_library.title_named', { name: ownerName }) : t('public_library.title')}
           </h2>

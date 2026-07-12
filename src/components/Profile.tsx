@@ -2,16 +2,20 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { useMyProfile, updateDisplayName, displayNameOf } from '../lib/profile'
+import { useMyProfile, updateDisplayName, displayNameOf, removeAvatar } from '../lib/profile'
 import { useSubscription } from '../lib/subscription'
 import { Avatar } from './Avatar'
 import { PremiumBadge } from './PremiumBadge'
+import { PremiumNotice } from './PremiumNotice'
+import { AvatarUploadModal } from './AvatarUploadModal'
 
 export function Profile() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { profile, loading } = useMyProfile()
-  const { isPremium } = useSubscription()
+  const { isPremium, hasFeatures } = useSubscription()
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false)
+  const [removingAvatar, setRemovingAvatar] = useState(false)
 
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -41,6 +45,15 @@ export function Profile() {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
   }
 
+  const deleteAvatar = async () => {
+    if (!confirm(t('avatar.confirm_remove'))) return
+    setRemovingAvatar(true)
+    const res = await removeAvatar()
+    setRemovingAvatar(false)
+    if ('error' in res && res.error) { alert(t('avatar.err_upload')); return }
+    queryClient.invalidateQueries({ queryKey: ['profile'] })
+  }
+
   const savePassword = async () => {
     if (pw1.length < 6) { setPwMsg({ text: t('profile.password_short'), error: true }); return }
     if (pw1 !== pw2) { setPwMsg({ text: t('profile.password_mismatch'), error: true }); return }
@@ -65,7 +78,7 @@ export function Profile() {
 
       {/* Identity */}
       <div className="flex items-center gap-4 bg-gray-800 border border-gray-700 rounded-xl p-4">
-        <Avatar name={shownName} size={64} premium={isPremium} />
+        <Avatar name={shownName} size={64} premium={isPremium} url={profile?.avatar_url} />
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-lg font-semibold text-white truncate">{shownName}</p>
@@ -74,6 +87,34 @@ export function Profile() {
           <p className="text-sm text-gray-400 truncate">{email}</p>
         </div>
       </div>
+
+      {/* Avatar */}
+      <section className="bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-gray-300">{t('avatar.section')}</h2>
+        {hasFeatures ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAvatarModalOpen(true)}
+              className="flex-1 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition"
+            >
+              {profile?.avatar_url ? t('avatar.change') : t('avatar.upload')}
+            </button>
+            {profile?.avatar_url && (
+              <button
+                onClick={deleteAvatar}
+                disabled={removingAvatar}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 text-gray-200 transition disabled:opacity-50"
+              >
+                {t('avatar.remove')}
+              </button>
+            )}
+          </div>
+        ) : (
+          <PremiumNotice title={t('avatar.locked_title')} desc={t('avatar.locked_desc')} />
+        )}
+      </section>
+
+      <AvatarUploadModal open={avatarModalOpen} onClose={() => setAvatarModalOpen(false)} />
 
       {/* Display name */}
       <section className="bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-3">
