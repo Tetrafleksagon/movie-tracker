@@ -226,6 +226,60 @@ export default {
     cta: "Support via Monobank",
     close: "Close"
   },
+  privacy: {
+    nav: "Privacy",
+    title: "Privacy Policy",
+    updated: "Last updated: 2026-07-16",
+    intro: "Movie Tracker (filmtrack.pp.ua) is an independent hobby project. This page explains what data we collect, why we need it, and who else touches it.",
+    contact_prefix: "Questions about your data? Write to",
+    sections: [
+      {
+        title: "What we collect",
+        body: "We only collect what the app actually needs to work:",
+        items: [
+          "Account: email and password (password is hashed by Supabase; we never see it).",
+          "Profile: your chosen display name and, optionally, an uploaded avatar image.",
+          "Your library: titles you added, statuses, ratings, episode progress and custom lists.",
+          "Feedback messages you send us, plus any email you choose to attach.",
+          "Basic technical info: browser type, page URL and error diagnostics (Sentry) — used to fix bugs."
+        ]
+      },
+      {
+        title: "Cookies and local storage",
+        body: "We do not use tracking cookies for advertising or profiling. We store:",
+        items: [
+          "Authentication session (Supabase) so you stay logged in.",
+          "UI language preference and cached title/poster localizations, in your browser only.",
+          "Cloudflare Web Analytics — a lightweight, cookieless page-view counter."
+        ]
+      },
+      {
+        title: "Third-party services",
+        body: "The app relies on the following services. Each one only sees the data it needs to do its job:",
+        items: [
+          "Supabase — hosts your account and library data (EU region).",
+          "TMDB — provides movie and TV metadata; queries go through our own proxy so TMDB never sees who you are.",
+          "Cloudflare — hosts the site, DNS, cookieless analytics and inbound email routing for our contact address.",
+          "Resend — delivers transactional emails (sign-up confirmation, password reset, feedback).",
+          "Sentry — receives anonymous error reports so we can fix crashes.",
+          "Monobank — processes donations if you choose to support the project (we never see your card details).",
+          "Google AdSense — planned. When enabled it may use cookies to show ads; a consent banner will appear before that."
+        ]
+      },
+      {
+        title: "Your rights",
+        body: "You can delete your account at any time — the request removes your library, episodes, lists, custom avatar and profile. To do this or to ask for a copy of your data, write to the address at the bottom of this page. We reply within a few days."
+      },
+      {
+        title: "Data retention",
+        body: "We keep your data as long as your account is active. Deleted accounts are removed within 30 days. Anonymous error reports and analytics are kept for up to 90 days."
+      },
+      {
+        title: "Changes to this policy",
+        body: "If we materially change what we collect or how we use it, we update this page and adjust the \"Last updated\" date at the top."
+      }
+    ]
+  },
   avatar: {
     section: "Avatar",
     upload: "Upload avatar",

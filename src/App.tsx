@@ -45,6 +45,7 @@ const Calendar = lazyWithReload(() => import('./components/Calendar').then(m => 
 const Lists = lazyWithReload(() => import('./components/Lists').then(m => ({ default: m.Lists })))
 const Profile = lazyWithReload(() => import('./components/Profile').then(m => ({ default: m.Profile })))
 const About = lazyWithReload(() => import('./components/About').then(m => ({ default: m.About })))
+const Privacy = lazyWithReload(() => import('./components/Privacy').then(m => ({ default: m.Privacy })))
 const SharedLibrary = lazyWithReload(() => import('./components/SharedLibrary').then(m => ({ default: m.SharedLibrary })))
 
 const RouteFallback = () => <p className="text-center text-gray-400 py-16 animate-pulse">...</p>
@@ -183,6 +184,7 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
         <Routes>
           <Route path="/" element={<Search />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/library" element={<AuthRoute user={user} authLoading={authLoading} element={<Library />} />} />
           <Route path="/calendar" element={<AuthRoute user={user} authLoading={authLoading} element={<Calendar />} />} />
           <Route path="/stats" element={<AuthRoute user={user} authLoading={authLoading} element={<Stats />} />} />
@@ -192,6 +194,8 @@ function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) 
       </Suspense>
       <footer className="text-center text-xs text-gray-600 py-6">
         <Link to="/about" className="text-gray-400 hover:text-white transition">{t('about.nav')}</Link>
+        <span className="mx-2 text-gray-600">·</span>
+        <Link to="/privacy" className="text-gray-400 hover:text-white transition">{t('privacy.nav')}</Link>
         <span className="mx-2 text-gray-600">·</span>
         <button
           type="button"
