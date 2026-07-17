@@ -163,6 +163,7 @@ export function Search() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchWrapperRef = useRef<HTMLDivElement>(null)
+  const seenRandomRef = useRef<Set<number>>(new Set())
 
   // Click-outside handler — only once
   useEffect(() => {
@@ -202,14 +203,15 @@ export function Search() {
           const pages = await Promise.all([1, 2].map(p =>
             fetchJson(`/api/tmdb/discover/movie?with_genres=${g.id}&sort_by=vote_average.desc&vote_count.gte=500&page=${p}&language=${tmdbLang}`)
           ))
-          return { ...g, movies: pages.flatMap((d: any) => d.results || []).slice(0, 20) }
+          // Both fetched pages go into the row — after excluding the user's
+          // library a 20-item cap left the rows too short.
+          return { ...g, movies: pages.flatMap((d: any) => d.results || []) }
         })),
       ])
       return {
         trending: trendingPages
           .flatMap((d: any) => d.results || [])
-          .filter((i: any) => i.media_type !== 'person')
-          .slice(0, 20),
+          .filter((i: any) => i.media_type !== 'person'),
         genres: genreData as GenreRow[],
       }
     },
@@ -238,15 +240,24 @@ export function Search() {
         queryKey: ['random-pool', tmdbLang],
         staleTime: Infinity,
         queryFn: async () => {
-          const pages = await Promise.all([1, 2, 3, 4, 5, 6, 7, 8].map(p =>
+          // 8 random pages out of the top 150 (instead of a fixed 1-8): a
+          // different ~160-movie pool each session, so picks don't repeat
+          // the same handful of blockbusters.
+          const pages = new Set<number>()
+          while (pages.size < 8) pages.add(1 + Math.floor(Math.random() * 150))
+          const data = await Promise.all([...pages].map(p =>
             fetchJson(`/api/tmdb/discover/movie?language=${tmdbLang}&sort_by=popularity.desc&vote_count.gte=100&page=${p}`)
           ))
-          return pages.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
+          return data.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
         },
       })
-      const candidates = pool.filter(m => m.id !== randomPick?.id && notInLibrary(m))
+      // Don't repeat anything already shown this session (reset when exhausted).
+      if (seenRandomRef.current.size >= pool.length - 1) seenRandomRef.current.clear()
+      const candidates = pool.filter(m => !seenRandomRef.current.has(m.id) && notInLibrary(m))
       if (candidates.length > 0) {
-        setRandomPick(candidates[Math.floor(Math.random() * candidates.length)])
+        const pick = candidates[Math.floor(Math.random() * candidates.length)]
+        seenRandomRef.current.add(pick.id)
+        setRandomPick(pick)
         if (isGuest) bumpGuestRandom()
       }
     } catch (e) {
