@@ -17,19 +17,24 @@ import { useQueryClient } from '@tanstack/react-query'
 
 // A new deploy renames every hashed chunk, so a tab opened before the deploy
 // points at files that no longer exist — importing one throws. Recover by
-// reloading once (fresh index.html → new chunk names); a sessionStorage flag
-// stops an infinite reload loop if the failure is something else.
+// reloading once (fresh index.html → new chunk names); a sessionStorage
+// TIMESTAMP (not a boolean) prevents an infinite reload loop but expires so a
+// tab that survives several deploys still gets rescued on the next stale chunk.
+const RELOAD_KEY = 'chunk-reload-at'
+const RELOAD_COOLDOWN_MS = 30_000
+
 function lazyWithReload<T extends { default: ComponentType<any> }>(
   factory: () => Promise<T>
 ) {
   return lazy(async () => {
     try {
       const mod = await factory()
-      sessionStorage.removeItem('chunk-reload')
+      sessionStorage.removeItem(RELOAD_KEY)
       return mod
     } catch (err) {
-      if (!sessionStorage.getItem('chunk-reload')) {
-        sessionStorage.setItem('chunk-reload', '1')
+      const lastAt = Number(sessionStorage.getItem(RELOAD_KEY) || 0)
+      if (!lastAt || Date.now() - lastAt > RELOAD_COOLDOWN_MS) {
+        sessionStorage.setItem(RELOAD_KEY, String(Date.now()))
         window.location.reload()
         return new Promise<T>(() => {}) // never resolves — the reload takes over
       }

@@ -16,7 +16,16 @@ export function initSentry() {
     // Light sampling — enough to spot trends without heavy traffic/cost.
     tracesSampleRate: 0.1,
     // Don't capture noise we can't act on.
-    ignoreErrors: ['ResizeObserver loop limit exceeded'],
+    // Chunk-load failures after a deploy are recovered automatically by
+    // `lazyWithReload` (one auto-reload → fresh index → correct hashes),
+    // so a report from a self-healing case would be false-positive noise.
+    ignoreErrors: [
+      'ResizeObserver loop limit exceeded',
+      /error loading dynamically imported module/i,
+      /failed to fetch dynamically imported module/i,
+      /loading chunk \d+ failed/i,
+      /loading css chunk/i,
+    ],
   })
 }
 
