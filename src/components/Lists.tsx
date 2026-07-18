@@ -6,6 +6,7 @@ import { useSubscription } from '../lib/subscription'
 import { MovieModal } from './MovieModal'
 import { EmptyState } from './EmptyState'
 import { PremiumNotice } from './PremiumNotice'
+import { FilmStripLoader } from './FilmStripLoader'
 import {
   fetchLists, createList, deleteList, fetchListItems, removeFromList,
 } from '../lib/lists'
@@ -45,7 +46,7 @@ export function Lists() {
   }
 
   if (subLoading || (hasFeatures && isLoading)) {
-    return <p className="text-center text-gray-400 py-16 animate-pulse">{t('common.loading')}</p>
+    return <FilmStripLoader />
   }
 
   // Lists are a premium feature — non-premium users get an upsell.

@@ -8,6 +8,7 @@ import { StatusSelect } from './StatusSelect'
 import { WelcomeTip } from './WelcomeTip'
 import { fetchLibraryIds } from '../lib/library'
 import { tmdbLangTag, fetchJson } from '../lib/tmdb'
+import { FilmStripLoader } from './FilmStripLoader'
 
 // Soft daily limit on "random pick" for guests — a nudge to register.
 const GUEST_RANDOM_LIMIT = 15
@@ -717,7 +718,7 @@ export function Search() {
           <section>
             <h2 className="text-lg font-bold text-gray-100 mb-3">{t('search.trending')}</h2>
             {homeLoading ? (
-              <p className="text-sm text-gray-500">{t('common.loading')}</p>
+              <FilmStripLoader />
             ) : (
               <InfiniteRow
                 initialItems={trending}

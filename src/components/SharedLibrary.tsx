@@ -9,6 +9,7 @@ import { fetchProfileById } from '../lib/profile'
 import { MovieModal } from './MovieModal'
 import { Avatar } from './Avatar'
 import { PremiumBadge } from './PremiumBadge'
+import { FilmStripLoader } from './FilmStripLoader'
 
 export function SharedLibrary() {
   const { userId } = useParams<{ userId: string }>()
@@ -94,7 +95,7 @@ export function SharedLibrary() {
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-400 py-16">{t('public_library.loading')}</p>
+          <FilmStripLoader />
         ) : notFound ? (
           <p className="text-center text-red-400 py-16">{t('public_library.error')}</p>
         ) : items.length === 0 ? (

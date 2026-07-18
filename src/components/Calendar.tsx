@@ -6,6 +6,7 @@ import { getPosterUrl, fetchMediaDetails, tmdbLangTag } from '../lib/tmdb'
 import { fetchCalendarSources, type CalendarSource } from '../lib/library'
 import { MovieModal } from './MovieModal'
 import { EmptyState } from './EmptyState'
+import { FilmStripLoader } from './FilmStripLoader'
 
 type Entry = {
   date: string            // YYYY-MM-DD
@@ -167,7 +168,7 @@ export function Calendar() {
       <h2 className="text-xl font-bold text-white mb-4">📅 {t('calendar.title')}</h2>
 
       {loading ? (
-        <p className="text-center text-gray-400 py-12">{t('common.loading')}</p>
+        <FilmStripLoader />
       ) : entries.length === 0 ? (
         <EmptyState icon="📅" title={t('calendar.empty')} subtitle={t('calendar.empty_sub')} />
       ) : (

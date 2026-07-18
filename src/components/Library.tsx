@@ -6,6 +6,7 @@ import { localizeMediaItems, tmdbLangTag } from '../lib/tmdb'
 import { MediaCard } from '../components/MediaCard'
 import { ShareModal } from '../components/ShareModal'
 import { EmptyState } from '../components/EmptyState'
+import { FilmStripLoader } from '../components/FilmStripLoader'
 
 const PAGE_SIZES = [5, 10, 15] as const
 
@@ -284,7 +285,7 @@ export function Library() {
 
       {/* Контент */}
       {loading ? (
-        <p className="text-center text-gray-400 py-8">{t('common.loading')}</p>
+        <FilmStripLoader />
       ) : filteredItems.length === 0 ? (
         items.length === 0 ? (
           <EmptyState

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from './EmptyState'
+import { FilmStripLoader } from './FilmStripLoader'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { getPosterUrl } from '../lib/tmdb'
@@ -126,7 +127,7 @@ export function Stats() {
   }, [rows])
 
   if (!rows) {
-    return <p className="text-center text-gray-400 py-16 animate-pulse">{t('common.loading')}</p>
+    return <FilmStripLoader />
   }
 
   if (!stats) {

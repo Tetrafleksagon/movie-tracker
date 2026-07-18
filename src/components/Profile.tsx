@@ -8,6 +8,7 @@ import { Avatar } from './Avatar'
 import { PremiumBadge } from './PremiumBadge'
 import { PremiumNotice } from './PremiumNotice'
 import { AvatarUploadModal } from './AvatarUploadModal'
+import { FilmStripLoader } from './FilmStripLoader'
 
 export function Profile() {
   const { t } = useTranslation()
@@ -67,7 +68,7 @@ export function Profile() {
   }
 
   if (loading) {
-    return <p className="text-center text-gray-400 py-16 animate-pulse">{t('common.loading')}</p>
+    return <FilmStripLoader />
   }
 
   const shownName = displayNameOf(profile, email)
