@@ -177,6 +177,10 @@ function AuthRoute({ element, user, authLoading }: { element: ReactNode; user: a
 
 function AppContent({ user, authLoading }: { user: any; authLoading: boolean }) {
   const { t } = useTranslation()
+  const location = useLocation()
+  // Reset scroll on route change — otherwise clicking a footer link (About,
+  // Privacy) leaves the new page scrolled to the bottom.
+  useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   return (
     <div className="min-h-screen bg-gray-900">
       <Navigation user={user} authLoading={authLoading} />

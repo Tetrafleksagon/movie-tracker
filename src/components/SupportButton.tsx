@@ -40,7 +40,7 @@ export function SupportButton() {
         title={t('support.button')}
         aria-label={t('support.button')}
         style={{ position: 'fixed', right: '24px', bottom: '88px', zIndex: 9998 }}
-        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white bg-gradient-to-br from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-rose-900/40 transition-colors"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-blue-600 hover:bg-blue-700 shadow-lg transition-colors"
       >
         <span className="leading-none" style={beat}>❤️</span>
       </button>
