@@ -3,6 +3,8 @@
 // slides across the frame band. Pure CSS (one keyframe on background-position);
 // no JS timer, no SVG, no external animation lib.
 
+import { useTranslation } from 'react-i18next'
+
 // Both the sprocket rows and the sliding highlight are baked into
 // `backgroundImage` layers so the whole thing is a single <div>.
 const STRIP: React.CSSProperties = {
@@ -35,11 +37,27 @@ const KEYFRAMES = `
 `
 
 export function FilmStripLoader({ label }: { label?: string }) {
+  const { t } = useTranslation()
+  const text = label ?? t('common.loading')
+
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-8" role="status" aria-live="polite">
+    // Occupy a viewport-height slice so the strip lands in the visual middle
+    // of the content area on any screen (not stuck to the top of a tiny box).
+    // 50vh reads as "center of the visible area" once the fixed header is
+    // subtracted, without depending on the parent page's own height.
+    <div
+      className="flex flex-col items-center justify-center gap-3 min-h-[50vh] py-8"
+      role="status"
+      aria-live="polite"
+    >
       <style>{KEYFRAMES}</style>
-      <div style={STRIP} aria-hidden="true" />
-      {label && <p className="text-xs text-gray-500">{label}</p>}
+      {/* Semi-transparent for a subtle, atmospheric feel — the sliding
+          highlight still reads clearly against the app's dark background. */}
+      <div style={{ ...STRIP, opacity: 0.75 }} className="relative" aria-hidden="true">
+        <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-300 font-medium select-none drop-shadow-sm">
+          {text}
+        </span>
+      </div>
     </div>
   )
 }
