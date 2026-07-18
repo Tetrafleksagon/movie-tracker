@@ -36,16 +36,37 @@ const GENRE_CONFIGS = [
 
 type GenreRow = { id: number; key: string; movies: any[] }
 
-function ScrollRow({ children }: { children: React.ReactNode }) {
+function ScrollRow({
+  children,
+  onEndReached,
+  endSlot,
+}: {
+  children: React.ReactNode
+  onEndReached?: () => void
+  endSlot?: React.ReactNode
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(false)
+
+  // Keep the latest callback in a ref so the scroll listener doesn't need to
+  // re-subscribe when the parent re-creates the function.
+  const onEndReachedRef = useRef(onEndReached)
+  useEffect(() => { onEndReachedRef.current = onEndReached }, [onEndReached])
 
   const check = useCallback(() => {
     const el = ref.current
     if (!el) return
     setCanLeft(el.scrollLeft > 8)
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+    const nearEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8
+    setCanRight(!nearEnd)
+    // Trigger a load a bit BEFORE the true end so the next tiles slide in
+    // as the user is still scrolling — feels seamless rather than "stopped".
+    if (!nearEnd && el.scrollLeft + el.clientWidth >= el.scrollWidth - 400) {
+      onEndReachedRef.current?.()
+    } else if (nearEnd) {
+      onEndReachedRef.current?.()
+    }
   }, [])
 
   useLayoutEffect(() => {
@@ -69,6 +90,7 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}
       >
         {children}
+        {endSlot}
       </div>
       {canLeft && (
         <div
@@ -89,6 +111,100 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
         </div>
       )}
     </div>
+  )
+}
+
+type InfiniteRowProps = {
+  initialItems: any[]
+  // Fetches page N (1-based); the caller wires TMDB URLs. Returns the raw
+  // items — filtering happens here so we can keep loading if a page turns
+  // out to be mostly library items.
+  fetchPage: (page: number) => Promise<any[]>
+  // Client-side filter (usually `notInLibrary`). Empty pages after filtering
+  // still count against the page counter but keep the loader trying.
+  filter: (item: any) => boolean
+  renderItem: (item: any) => React.ReactNode
+  // How many pages were baked into `initialItems`. The row will start
+  // fetching from `initialPages + 1`.
+  initialPages?: number
+  // Safety cap so a runaway scroll can't hammer TMDB. TMDB /discover tops
+  // out around page 500; picking a lower ceiling is plenty for a row UI.
+  maxPages?: number
+}
+
+// Wraps a ScrollRow with cursor-based load-more: when the user scrolls near
+// the right edge, we fetch the next page and append. Dedup by id so React
+// keys stay unique even if TMDB returns overlaps between pages.
+function InfiniteRow({
+  initialItems,
+  fetchPage,
+  filter,
+  renderItem,
+  initialPages = 1,
+  maxPages = 15,
+}: InfiniteRowProps) {
+  const { t } = useTranslation()
+  // TMDB can return the same title on adjacent pages (a popular film that
+  // moves between page 1 and page 2 of `trending` while we fetch both),
+  // so dedup on the way in — otherwise React warns about duplicate keys.
+  const dedupById = useCallback((arr: any[]) => {
+    const seen = new Set<any>()
+    const out: any[] = []
+    for (const x of arr) { if (!seen.has(x.id)) { seen.add(x.id); out.push(x) } }
+    return out
+  }, [])
+  const [items, setItems] = useState<any[]>(() => dedupById(initialItems))
+  const [nextPage, setNextPage] = useState(initialPages + 1)
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  // Reset when initial data actually changes (language switch → new query).
+  useEffect(() => {
+    setItems(dedupById(initialItems))
+    setNextPage(initialPages + 1)
+    setLoading(false)
+    setDone(false)
+  }, [initialItems, initialPages, dedupById])
+
+  const loadingRef = useRef(false)
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || done) return
+    if (nextPage > maxPages) { setDone(true); return }
+    loadingRef.current = true
+    setLoading(true)
+    try {
+      const fresh = await fetchPage(nextPage)
+      if (!fresh.length) { setDone(true); return }
+      setItems(prev => {
+        const seen = new Set(prev.map((x: any) => x.id))
+        const add = fresh.filter((x: any) => !seen.has(x.id))
+        return add.length ? [...prev, ...add] : prev
+      })
+      setNextPage(p => p + 1)
+    } catch (e) {
+      console.error('InfiniteRow fetch error:', e)
+      setDone(true)
+    } finally {
+      loadingRef.current = false
+      setLoading(false)
+    }
+  }, [nextPage, done, maxPages, fetchPage])
+
+  const filtered = items.filter(filter)
+
+  return (
+    <ScrollRow
+      onEndReached={loadMore}
+      endSlot={
+        loading ? (
+          <div className="flex-shrink-0 w-40 h-52 bg-gray-800/60 rounded-lg flex items-center justify-center">
+            <span className="text-xs text-gray-500 animate-pulse">{t('common.loading')}</span>
+          </div>
+        ) : null
+      }
+    >
+      {filtered.map(renderItem)}
+    </ScrollRow>
   )
 }
 
@@ -251,9 +367,15 @@ export function Search() {
           return data.flatMap((d: any) => d.results || []).filter((m: any) => m.poster_path && m.backdrop_path)
         },
       })
-      // Don't repeat anything already shown this session (reset when exhausted).
-      if (seenRandomRef.current.size >= pool.length - 1) seenRandomRef.current.clear()
-      const candidates = pool.filter(m => !seenRandomRef.current.has(m.id) && notInLibrary(m))
+      // Don't repeat anything already shown this session. The exhaust check
+      // must consider the LIBRARY-filtered pool, not the raw pool — otherwise
+      // a user whose library covers most of the pool gets stuck: `seen`
+      // fills up but never crosses the raw threshold, so no candidates remain.
+      let candidates = pool.filter(m => !seenRandomRef.current.has(m.id) && notInLibrary(m))
+      if (candidates.length === 0) {
+        seenRandomRef.current.clear()
+        candidates = pool.filter(notInLibrary)
+      }
       if (candidates.length > 0) {
         const pick = candidates[Math.floor(Math.random() * candidates.length)]
         seenRandomRef.current.add(pick.id)
@@ -597,8 +719,15 @@ export function Search() {
             {homeLoading ? (
               <p className="text-sm text-gray-500">{t('common.loading')}</p>
             ) : (
-              <ScrollRow>
-                {trending.filter(notInLibrary).map(item => (
+              <InfiniteRow
+                initialItems={trending}
+                initialPages={2}
+                filter={notInLibrary}
+                fetchPage={async page => {
+                  const data = await fetchJson(`/api/tmdb/trending/all/week?language=${tmdbLang}&page=${page}`)
+                  return (data.results || []).filter((i: any) => i.media_type !== 'person')
+                }}
+                renderItem={item => (
                   <CardTile
                     key={item.id}
                     item={item}
@@ -606,30 +735,42 @@ export function Search() {
                     onStatus={s => addToLibrary(item, s)}
                     onClick={() => setSelectedItem(item)}
                   />
-                ))}
-              </ScrollRow>
+                )}
+              />
             )}
           </section>
 
-          {/* Genre rows (skip a genre once all its picks are already in the library) */}
+          {/* Genre rows */}
           {!homeLoading && genres.map(genre => {
-            const movies = genre.movies.filter(notInLibrary)
-            if (movies.length === 0) return null
+            // Hide a genre only if we couldn't show anything on first paint
+            // (all first-two-page picks are already in the library). Once
+            // the row appears, InfiniteRow can still discover more via
+            // subsequent pages as the user scrolls.
+            if (genre.movies.filter(notInLibrary).length === 0) return null
             return (
-            <section key={genre.id}>
-              <h2 className="text-lg font-bold text-gray-100 mb-3">{t(genre.key)}</h2>
-              <ScrollRow>
-                {movies.map(item => (
-                  <CardTile
-                    key={item.id}
-                    item={item}
-                    status={itemStatuses[item.id] || ''}
-                    onStatus={s => addToLibrary(item, s)}
-                    onClick={() => setSelectedItem(item)}
-                  />
-                ))}
-              </ScrollRow>
-            </section>
+              <section key={genre.id}>
+                <h2 className="text-lg font-bold text-gray-100 mb-3">{t(genre.key)}</h2>
+                <InfiniteRow
+                  initialItems={genre.movies}
+                  initialPages={2}
+                  filter={notInLibrary}
+                  fetchPage={async page => {
+                    const data = await fetchJson(
+                      `/api/tmdb/discover/movie?with_genres=${genre.id}&sort_by=vote_average.desc&vote_count.gte=500&page=${page}&language=${tmdbLang}`
+                    )
+                    return data.results || []
+                  }}
+                  renderItem={item => (
+                    <CardTile
+                      key={item.id}
+                      item={item}
+                      status={itemStatuses[item.id] || ''}
+                      onStatus={s => addToLibrary(item, s)}
+                      onClick={() => setSelectedItem(item)}
+                    />
+                  )}
+                />
+              </section>
             )
           })}
         </div>
